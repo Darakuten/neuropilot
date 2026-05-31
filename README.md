@@ -1,4 +1,4 @@
-# DLR Autonomous Research Ops
+# NeuroPilot
 
 <p align="center">
   <strong>AI × Neuroengineering / Neuroscience に特化した研究自動化オペレーティングシステム</strong><br/>
@@ -27,7 +27,7 @@
 
 ## 日本語サマリー
 
-DLR Autonomous Research Ops は、**AI × 神経工学 / 神経科学**の研究運用に特化したマルチエージェント制御基盤です。  
+NeuroPilot は、**AI × 神経工学 / 神経科学**の研究運用に特化したマルチエージェント制御基盤です。  
 仮説立案、先行研究調査、ML/DL実験、主張監査、論文成果物作成までを、一つのオペレーションレイヤーで統合します。
 
 ### このリポジトリが強い領域
@@ -38,7 +38,7 @@ DLR Autonomous Research Ops は、**AI × 神経工学 / 神経科学**の研究
 
 ## English Summary
 
-DLR Autonomous Research Ops is a Paperclip-based control plane purpose-built for
+NeuroPilot is a Paperclip-based control plane purpose-built for
 **AI-first neuroengineering and neuroscience research operations**.
 
 It coordinates specialized agents for:
@@ -102,7 +102,7 @@ GitHub repo Social Preview can be set from repository settings.
 Use this image for a clean PI-facing card:
 
 - Recommended image: `doc/visualizations/dl-research-overview.png`
-- Recommended text: `DLR Autonomous Research Ops — AI × Neuroengineering / Neuroscience`
+- Recommended text: `NeuroPilot — AI × Neuroengineering / Neuroscience`
 
 ## Project policy for GitHub top
 

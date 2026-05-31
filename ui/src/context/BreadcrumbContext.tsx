@@ -13,7 +13,7 @@ interface BreadcrumbContextValue {
 }
 
 const BreadcrumbContext = createContext<BreadcrumbContextValue | null>(null);
-const APP_TITLE = "DLR Research Ops";
+const APP_TITLE = "NeuroPilot";
 
 function breadcrumbsEqual(left: Breadcrumb[], right: Breadcrumb[]) {
   if (left === right) return true;
