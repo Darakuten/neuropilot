@@ -17,7 +17,6 @@
 </p>
 
 <p align="center">
-  <a href="http://127.0.0.1:3100/DLR/dashboard"><strong>Live Dashboard (Local)</strong></a> ·
   <a href="doc/visualizations/dl-research-overview.png"><strong>Social Preview Image</strong></a> ·
   <a href="companies/dl-research"><strong>DL Research Company Package</strong></a> ·
   <a href="doc/visualizations/dl-research-overview.pdf"><strong>Architecture PDF</strong></a>
@@ -53,13 +52,12 @@ It coordinates specialized agents for:
 
 ## Demo
 
-- **PI dashboard**: `http://127.0.0.1:3100/DLR/dashboard`
 - **Architecture preview**: `doc/visualizations/dl-research-overview.png`
 - **Presentation PDF**: `doc/visualizations/dl-research-overview.pdf`
 
 ## PI demo flow (5 minutes)
 
-1. Open `http://127.0.0.1:3100/DLR/dashboard`
+1. Start a local instance in your own environment (`pnpm dev`)
 2. Inspect active research themes and issue backlog
 3. Open a run transcript and verify model/experiment context
 4. Check evidence artifacts and claim audit trail
@@ -75,7 +73,12 @@ pnpm dev
 Then open:
 
 - API/UI: `http://localhost:3100`
-- DLR dashboard: `http://127.0.0.1:3100/DLR/dashboard`
+
+## Safety note
+
+- Do not publish direct local dashboard URLs in public docs.
+- Running agents may consume model tokens/costs depending on local configuration.
+- Keep dashboard access private and enable explicit approval/budget gates before execution.
 
 ## Import the research company
 
