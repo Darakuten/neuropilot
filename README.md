@@ -6,22 +6,42 @@
 </p>
 
 <p align="center">
+  <img alt="domain" src="https://img.shields.io/badge/Domain-Neuroengineering%20%2F%20Neuroscience-7c3aed">
+  <img alt="stack" src="https://img.shields.io/badge/Stack-ML%20%2F%20DL%20%2F%20LLM-0ea5e9">
+  <img alt="orchestration" src="https://img.shields.io/badge/Mode-Multi--Agent%20Research%20Ops-10b981">
+  <img alt="license" src="https://img.shields.io/badge/License-MIT-f59e0b">
+</p>
+
+<p align="center">
   <img src="doc/visualizations/dl-research-overview.png" alt="DLR overview" width="920" />
 </p>
 
 <p align="center">
   <a href="http://127.0.0.1:3100/DLR/dashboard"><strong>Live Dashboard (Local)</strong></a> ·
+  <a href="doc/visualizations/dl-research-overview.png"><strong>Social Preview Image</strong></a> ·
   <a href="companies/dl-research"><strong>DL Research Company Package</strong></a> ·
   <a href="doc/visualizations/dl-research-overview.pdf"><strong>Architecture PDF</strong></a>
 </p>
 
 ---
 
-## What this is
+## 日本語サマリー
 
-DLR Autonomous Research Ops is a Paperclip-based control plane for **AI-driven neuroscience and neuroengineering research**.
+DLR Autonomous Research Ops は、**AI × 神経工学 / 神経科学**の研究運用に特化したマルチエージェント制御基盤です。  
+仮説立案、先行研究調査、ML/DL実験、主張監査、論文成果物作成までを、一つのオペレーションレイヤーで統合します。
 
-It coordinates specialized agents across:
+### このリポジトリが強い領域
+
+- **対象領域**: neural signals, BCI, neurophysiology, computational neuroscience
+- **手法領域**: ML/DL, representation learning, 再現性検証, 比較評価
+- **運用領域**: 研究ログ追跡、証拠連結、citation/claim audit、PIレビュー
+
+## English Summary
+
+DLR Autonomous Research Ops is a Paperclip-based control plane purpose-built for
+**AI-first neuroengineering and neuroscience research operations**.
+
+It coordinates specialized agents for:
 
 - hypothesis generation for neural systems
 - prior-art and citation-grounded literature scouting
@@ -29,23 +49,18 @@ It coordinates specialized agents across:
 - claim-evidence integrity audit
 - paper/poster/slides production for submission workflows
 
-## Domain focus (not generic)
-
-This repository is intentionally optimized for **AI × 神経工学 / 神経科学**.
-
-- **Problem domain**: neural signals, brain-computer interaction, neurophysiology, computational neuroscience
-- **Method domain**: ML/DL pipelines, representation learning, model comparison, reproducibility checks
-- **Output domain**: research artifacts with auditability (claims, evidence, citations, revisions)
-
-If you are looking for a general-purpose task manager, this is not that.
-This is a research operating layer for neural AI labs.
-
 ## Why PI teams use this
 
 - **Single command center**: strategy, execution, and review in one dashboard
 - **Traceable science**: issues/comments/runs preserve full decision and evidence history
 - **Governed autonomy**: heartbeat automation with budget and approval gates
 - **Faster paper loop**: from idea to draft with structured QA checkpoints
+
+## Demo
+
+- **PI dashboard**: `http://127.0.0.1:3100/DLR/dashboard`
+- **Architecture preview**: `doc/visualizations/dl-research-overview.png`
+- **Presentation PDF**: `doc/visualizations/dl-research-overview.pdf`
 
 ## PI demo flow (5 minutes)
 
@@ -80,6 +95,14 @@ pnpm paperclipai company import companies/dl-research --target new --newCompanyN
 - `ui/`: board dashboard and operator UX
 - `packages/plugins/examples/dl-research-*`: research plugin examples
 - `doc/visualizations/`: overview visual assets for PI presentation
+
+## GitHub Social Preview setup
+
+GitHub repo Social Preview can be set from repository settings.
+Use this image for a clean PI-facing card:
+
+- Recommended image: `doc/visualizations/dl-research-overview.png`
+- Recommended text: `DLR Autonomous Research Ops — AI × Neuroengineering / Neuroscience`
 
 ## Project policy for GitHub top
 
