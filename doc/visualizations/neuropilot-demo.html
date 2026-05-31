@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280, initial-scale=1" />
+<title>NeuroPilot Workflow Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #060b16;
+    --panel: rgba(13, 24, 43, 0.92);
+    --line: rgba(147, 197, 253, 0.24);
+    --text: #e6edf8;
+    --muted: #9fb0cc;
+    --brand: #7dd3fc;
+    --brand-2: #a78bfa;
+    --ok: #34d399;
+    --warn: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 1280px;
+    height: 720px;
+    overflow: hidden;
+    font-family: "Inter", system-ui, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+  }
+  .stage {
+    width: 1280px;
+    height: 720px;
+    position: relative;
+    background:
+      radial-gradient(900px 400px at 10% 0%, rgba(125, 211, 252, 0.18), transparent 55%),
+      radial-gradient(700px 350px at 95% 5%, rgba(167, 139, 250, 0.16), transparent 55%),
+      linear-gradient(180deg, #050a13 0%, #040913 100%);
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--line);
+  }
+  .logo {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .logo span { color: var(--brand); }
+  .phase-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--brand);
+  }
+  .progress-track {
+    position: absolute;
+    top: 68px;
+    left: 32px;
+    right: 32px;
+    height: 3px;
+    background: rgba(147, 197, 253, 0.12);
+    border-radius: 999px;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--brand), var(--brand-2));
+    border-radius: 999px;
+    transition: none;
+  }
+  .steps {
+    display: flex;
+    gap: 8px;
+    padding: 16px 32px 0;
+  }
+  .step-pill {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    opacity: 0.45;
+  }
+  .step-pill.active {
+    opacity: 1;
+    color: var(--brand);
+    border-color: rgba(125, 211, 252, 0.5);
+    background: rgba(125, 211, 252, 0.08);
+  }
+  .content {
+    position: absolute;
+    top: 120px;
+    left: 32px;
+    right: 32px;
+    bottom: 32px;
+  }
+  .scene {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .panel-title {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin-bottom: 12px;
+  }
+  .issue-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    line-height: 1.35;
+  }
+  .issue-body {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.55;
+    margin-bottom: 14px;
+  }
+  .meta-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .tag {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    color: #c4d7f4;
+  }
+  .tag.agent { color: var(--brand-2); border-color: rgba(167, 139, 250, 0.4); }
+  .tag.ok { color: var(--ok); border-color: rgba(52, 211, 153, 0.4); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; height: 100%; }
+  .run-bar-wrap { margin: 16px 0; }
+  .run-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .run-bar {
+    height: 8px;
+    background: rgba(147, 197, 253, 0.12);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .run-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--brand), var(--ok));
+    border-radius: 999px;
+  }
+  .log {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    line-height: 1.7;
+    color: var(--muted);
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    padding: 12px;
+    max-height: 140px;
+    overflow: hidden;
+  }
+  .log-line { opacity: 0.35; white-space: nowrap; }
+  .log-line.visible { opacity: 1; color: #d6e2f6; }
+  .artifact-list { margin-top: 12px; }
+  .artifact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(147, 197, 253, 0.08);
+    opacity: 0.3;
+  }
+  .artifact.visible { opacity: 1; }
+  .artifact-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ok);
+  }
+  .audit-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(147, 197, 253, 0.08);
+    opacity: 0.25;
+  }
+  .audit-row.visible { opacity: 1; }
+  .audit-claim { font-size: 13px; font-weight: 600; max-width: 70%; }
+  .audit-status {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .audit-status.pass { color: var(--ok); }
+  .outputs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 8px;
+  }
+  .output-card {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(10, 18, 33, 0.85);
+    padding: 24px 16px;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  .output-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .output-icon {
+    font-size: 28px;
+    margin-bottom: 10px;
+  }
+  .output-name {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .output-desc {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+  .caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 14px 20px;
+    background: rgba(6, 11, 22, 0.88);
+    border-top: 1px solid var(--line);
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .caption strong { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="topbar">
+    <div class="logo">Neuro<span>Pilot</span></div>
+    <div class="phase-label" id="phaseLabel">Hypothesis Generation</div>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="steps">
+    <div class="step-pill" id="pill0">01 Hypothesis</div>
+    <div class="step-pill" id="pill1">02 Experiment</div>
+    <div class="step-pill" id="pill2">03 Audit</div>
+    <div class="step-pill" id="pill3">04 Paper</div>
+  </div>
+
+  <div class="content">
+    <!-- Scene 1: Hypothesis -->
+    <div class="scene" id="scene0">
+      <div class="panel" style="max-width: 720px;">
+        <div class="panel-title">New Research Issue</div>
+        <div class="issue-title" id="issueTitle"></div>
+        <div class="issue-body" id="issueBody"></div>
+        <div class="meta-row">
+          <span class="tag agent" id="tagAgent">Owner: Ideator</span>
+          <span class="tag" id="tagCriteria">Success: AUC &gt; baseline + 4%</span>
+          <span class="tag" id="tagDomain">Domain: ECoG / BCI</span>
+        </div>
+      </div>
+      <div class="caption" id="cap0"><strong>Hypothesis generation</strong> — vague direction becomes a falsifiable neuro-AI research question.</div>
+    </div>
+
+    <!-- Scene 2: Experiment -->
+    <div class="scene" id="scene1">
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-title">Experiment Run</div>
+          <div class="run-bar-wrap">
+            <div class="run-bar-label">
+              <span>experimenter → engineer</span>
+              <span id="runPct">0%</span>
+            </div>
+            <div class="run-bar"><div class="run-bar-fill" id="runFill"></div></div>
+          </div>
+          <div class="log" id="logBox"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Generated Artifacts</div>
+          <div class="artifact-list" id="artifactList"></div>
+        </div>
+      </div>
+      <div class="caption" id="cap1"><strong>Experiment execution</strong> — tracked configs, logs, and reproducible evidence artifacts.</div>
+    </div>
+
+    <!-- Scene 3: Audit -->
+    <div class="scene" id="scene2">
+      <div class="panel">
+        <div class="panel-title">Claim &amp; Citation Audit (Critic)</div>
+        <div id="auditList"></div>
+      </div>
+      <div class="caption" id="cap2"><strong>Integrity gate</strong> — every claim is verified against experiment evidence before publication.</div>
+    </div>
+
+    <!-- Scene 4: Paper -->
+    <div class="scene" id="scene3">
+      <div class="panel">
+        <div class="panel-title">Publication Outputs (Writer)</div>
+        <div class="outputs">
+          <div class="output-card" id="out0">
+            <div class="output-icon">📄</div>
+            <div class="output-name">Paper Draft</div>
+            <div class="output-desc">arXiv-ready PDF with audited claims</div>
+          </div>
+          <div class="output-card" id="out1">
+            <div class="output-icon">📊</div>
+            <div class="output-name">Slides</div>
+            <div class="output-desc">Conference talk deck + speaker notes</div>
+          </div>
+          <div class="output-card" id="out2">
+            <div class="output-icon">🖼</div>
+            <div class="output-name">Poster</div>
+            <div class="output-desc">A0 poster with figure pipeline</div>
+          </div>
+        </div>
+      </div>
+      <div class="caption" id="cap3"><strong>Paper generation</strong> — validated outputs feed directly into submission-ready assets.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const DURATION = 25000;
+  const SCENES = [
+    { start: 0, end: 6250, label: "Hypothesis Generation", pill: 0 },
+    { start: 6250, end: 12500, label: "Experiment Execution", pill: 1 },
+    { start: 12500, end: 18750, label: "Claim & Citation Audit", pill: 2 },
+    { start: 18750, end: 25000, label: "Paper Output", pill: 3 },
+  ];
+
+  const LOG_LINES = [
+    "[00:01] Loading ECoG preprocessed tensors…",
+    "[00:04] Baseline model: Transformer encoder (seed=42)",
+    "[00:08] Training epoch 12/20 — val AUC 0.847",
+    "[00:14] Ablation: remove phase-locking feature",
+    "[00:18] Best checkpoint saved → results/run_042/",
+    "[00:22] Metrics exported: metrics.json, fig_main.pdf",
+  ];
+
+  const ARTIFACTS = [
+    "results/run_042/metrics.json",
+    "results/run_042/config.yaml",
+    "results/run_042/fig_main.pdf",
+    "results/run_042/checkpoint.pt",
+  ];
+
+  const AUDITS = [
+    { claim: "Model exceeds baseline AUC by 4.2%", evidence: "metrics.json L42" },
+    { claim: "Phase-locking ablation is statistically significant", evidence: "ablation_table.csv" },
+    { claim: "Citation [Smith2024] supports methodology", evidence: "citation-audit PASS" },
+    { claim: "No cherry-picked seed reported", evidence: "multiseed_summary.json" },
+  ];
+
+  const issueTitleFull = "Cross-region phase coupling improves ECoG decoding under non-stationarity";
+  const issueBodyFull = "Hypothesis: adaptive graph attention on travelling-wave features yields measurable gains on held-out subjects with explicit reproducibility criteria.";
+
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+
+  function typewriter(el, full, progress) {
+    const n = Math.floor(full.length * clamp(progress, 0, 1));
+    el.textContent = full.slice(0, n);
+  }
+
+  function setSceneVisibility(activeIdx, localT, sceneDur) {
+    for (let i = 0; i < 4; i++) {
+      const el = document.getElementById("scene" + i);
+      let opacity = 0;
+      if (i === activeIdx) {
+        const fadeIn = clamp(localT / 400, 0, 1);
+        const fadeOut = localT > sceneDur - 400 ? clamp((sceneDur - localT) / 400, 0, 1) : 1;
+        opacity = fadeIn * fadeOut;
+      }
+      el.style.opacity = String(opacity);
+    }
+  }
+
+  function updatePills(activeIdx) {
+    for (let i = 0; i < 4; i++) {
+      document.getElementById("pill" + i).classList.toggle("active", i === activeIdx);
+    }
+  }
+
+  window.__seek = function (ms) {
+    ms = clamp(ms, 0, DURATION);
+    const globalProgress = ms / DURATION;
+    document.getElementById("progressFill").style.width = (globalProgress * 100) + "%";
+
+    let scene = SCENES[0];
+    for (const s of SCENES) {
+      if (ms >= s.start && ms < s.end) { scene = s; break; }
+    }
+    if (ms >= DURATION - 1) scene = SCENES[3];
+
+    document.getElementById("phaseLabel").textContent = scene.label;
+    updatePills(scene.pill);
+
+    const localT = ms - scene.start;
+    const sceneDur = scene.end - scene.start;
+    setSceneVisibility(scene.pill, localT, sceneDur);
+
+    // Scene 0: Hypothesis
+    if (scene.pill === 0) {
+      const p = ease(clamp(localT / (sceneDur * 0.85), 0, 1));
+      typewriter(document.getElementById("issueTitle"), issueTitleFull, p * 0.6 + clamp(localT / 2000, 0, 0.4));
+      typewriter(document.getElementById("issueBody"), issueBodyFull, clamp((localT - 1200) / 3500, 0, 1));
+    }
+
+    // Scene 1: Experiment
+    if (scene.pill === 1) {
+      const runP = ease(clamp(localT / (sceneDur * 0.75), 0, 1));
+      const pct = Math.round(runP * 100);
+      document.getElementById("runPct").textContent = pct + "%";
+      document.getElementById("runFill").style.width = pct + "%";
+
+      const logBox = document.getElementById("logBox");
+      logBox.innerHTML = "";
+      LOG_LINES.forEach((line, i) => {
+        const showAt = (i + 1) / LOG_LINES.length * sceneDur * 0.8;
+        const div = document.createElement("div");
+        div.className = "log-line" + (localT >= showAt ? " visible" : "");
+        div.textContent = line;
+        logBox.appendChild(div);
+      });
+
+      const artList = document.getElementById("artifactList");
+      artList.innerHTML = "";
+      ARTIFACTS.forEach((name, i) => {
+        const showAt = sceneDur * 0.35 + i * 600;
+        const div = document.createElement("div");
+        div.className = "artifact" + (localT >= showAt ? " visible" : "");
+        div.innerHTML = '<span class="artifact-dot"></span>' + name;
+        artList.appendChild(div);
+      });
+    }
+
+    // Scene 2: Audit
+    if (scene.pill === 2) {
+      const list = document.getElementById("auditList");
+      list.innerHTML = "";
+      AUDITS.forEach((a, i) => {
+        const showAt = 500 + i * 900;
+        const passAt = showAt + 500;
+        const row = document.createElement("div");
+        row.className = "audit-row" + (localT >= showAt ? " visible" : "");
+        const status = localT >= passAt ? "pass" : "";
+        const statusText = localT >= passAt ? "PASS" : "CHECKING…";
+        row.innerHTML =
+          '<div class="audit-claim">' + a.claim + '<div style="font-size:11px;color:var(--muted);margin-top:4px">' + a.evidence + '</div></div>' +
+          '<div class="audit-status ' + status + '">' + statusText + '</div>';
+        list.appendChild(row);
+      });
+    }
+
+    // Scene 3: Paper
+    if (scene.pill === 3) {
+      for (let i = 0; i < 3; i++) {
+        const card = document.getElementById("out" + i);
+        const showAt = 400 + i * 700;
+        card.classList.toggle("visible", localT >= showAt);
+      }
+    }
+  };
+
+  window.__seek(0);
+})();
+</script>
+</body>
+</html>

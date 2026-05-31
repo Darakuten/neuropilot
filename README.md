@@ -18,7 +18,7 @@
 
 <p align="center">
   <a href="doc/visualizations/dl-research-overview.png"><strong>Social Preview Image</strong></a> ·
-  <a href="#workflow-demo-90-seconds"><strong>Workflow Demo</strong></a> ·
+  <a href="#workflow-demo"><strong>Workflow Demo</strong></a> ·
   <a href="companies/dl-research"><strong>DL Research Company Package</strong></a> ·
   <a href="doc/visualizations/dl-research-overview.pdf"><strong>Architecture PDF</strong></a>
 </p>
@@ -45,21 +45,24 @@ It coordinates specialized agents for:
 - **Governed autonomy**: heartbeat automation with budget and approval gates
 - **Faster paper loop**: from idea to draft with structured QA checkpoints
 
-## Workflow Demo (90 seconds)
+## Workflow Demo
+
+![NeuroPilot workflow demo](doc/visualizations/neuropilot-demo.gif)
 
 This project is best understood as a single, continuous workflow:
 **hypothesis generation -> experiment execution -> paper artifact generation**.
 
-Use this demo sequence in PI presentations:
+The animation above is a schematic demo (no live agent runs, no token cost).
+Full-quality video: [`doc/visualizations/neuropilot-demo.mp4`](doc/visualizations/neuropilot-demo.mp4)
 
-- **00:00-00:20** Hypothesis generation in the browser UI (issue + owner + success criteria)
-- **00:20-00:50** Experiment execution (run kickoff, status, and evidence/log artifacts)
-- **00:50-01:20** Claim/citation audit gate
-- **01:20-01:30** Paper output generation (PDF/slides/poster)
+Timeline:
 
-Demo playbook:
+- **00:00-00:06** Hypothesis generation (issue + owner + success criteria)
+- **00:06-00:12** Experiment execution (run progress, logs, artifacts)
+- **00:12-00:19** Claim/citation audit gate
+- **00:19-00:25** Paper output generation (PDF/slides/poster)
 
-- `doc/DEMO_VIDEO_PLAYBOOK.md` (shot list, script, and narration guide)
+Recording playbook: [`doc/DEMO_VIDEO_PLAYBOOK.md`](doc/DEMO_VIDEO_PLAYBOOK.md)
 
 ## Domain Specialization
 
@@ -69,9 +72,11 @@ Demo playbook:
 
 ## Demo
 
+- **Workflow demo (GIF)**: `doc/visualizations/neuropilot-demo.gif`
+- **Workflow demo (MP4)**: `doc/visualizations/neuropilot-demo.mp4`
 - **Architecture preview**: `doc/visualizations/dl-research-overview.png`
 - **Presentation PDF**: `doc/visualizations/dl-research-overview.pdf`
-- **Workflow demo playbook**: `doc/DEMO_VIDEO_PLAYBOOK.md`
+- **Recording playbook**: `doc/DEMO_VIDEO_PLAYBOOK.md`
 
 ## PI demo flow (5 minutes)
 
@@ -111,7 +116,7 @@ pnpm paperclipai company import companies/dl-research --target new --newCompanyN
 - `server/`: orchestration API, heartbeat execution, governance services
 - `ui/`: board dashboard and operator UX
 - `packages/plugins/examples/dl-research-*`: research plugin examples
-- `doc/visualizations/`: overview visual assets for PI presentation
+- `doc/visualizations/`: overview poster, workflow demo (GIF/MP4), and PI presentation assets
 
 ## GitHub Social Preview setup
 

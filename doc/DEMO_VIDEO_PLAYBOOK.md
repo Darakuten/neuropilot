@@ -62,13 +62,24 @@ Second, experiments run through tracked multi-agent workflows with reproducible 
 Third, claim and citation audits validate scientific integrity before paper outputs are generated.  
 From idea to publication, NeuroPilot provides one control plane for PI-level oversight."
 
-## README embedding options
+## Generated assets (in repository)
 
-### Option A: Hosted video link (recommended)
+The README embeds a schematic workflow animation generated from synthetic UI frames (no live agent runs):
 
-Upload video to YouTube/Vimeo and add a "Watch Demo" link in `README.md`.
+- `doc/visualizations/neuropilot-demo.gif` — inline autoplay in README
+- `doc/visualizations/neuropilot-demo.mp4` — full-quality download
+- `doc/visualizations/neuropilot-demo.html` — source animation (deterministic `window.__seek(ms)` API)
 
-### Option B: Repository video asset
+Regenerate after editing the HTML:
 
-Place a compressed `mp4` under `doc/visualizations/` and link it from `README.md`.
-Prefer keeping file size small for repository hygiene.
+```bash
+node doc/visualizations/render-demo.mjs
+```
+
+This captures ~500 frames at 20fps (25 seconds), encodes MP4 + palette-optimized GIF, and removes temporary frame files automatically.
+
+## Note on demo fidelity
+
+The bundled demo is **schematic**, not a screen recording of a live NeuroPilot instance.
+It is designed for public sharing without token cost or accidental agent execution.
+For live PI presentations, follow the safety rules above and use a dedicated demo workspace with strict budget caps.
