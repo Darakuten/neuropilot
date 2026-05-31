@@ -1,0 +1,10 @@
+---
+name: "[Lit] Competitor scan + NTK-SAP/ProsPr implementation map (P0)"
+assignee: lit-scout
+project: neurips-2026-submodular-lt
+priority: high
+---
+
+Map competitor methods and implementation availability relevant to the current hypothesis.
+
+Include novelty-risk and fallback framing recommendations.

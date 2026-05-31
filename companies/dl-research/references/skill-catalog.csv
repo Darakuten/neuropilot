@@ -1,0 +1,33 @@
+skill_slug,source_repo,source_path,source_commit,license,classification,usage,notes
+pdf,ComposioHQ/awesome-claude-skills,document-skills/pdf/SKILL.md,48ffe0c633c6279bb100ae59e0c3ec7f4d0a81d8,Apache-2.0,utility,referenced,Document parsing utility
+pptx,ComposioHQ/awesome-claude-skills,document-skills/pptx/SKILL.md,48ffe0c633c6279bb100ae59e0c3ec7f4d0a81d8,Apache-2.0,utility,referenced,Slides utility
+xlsx,ComposioHQ/awesome-claude-skills,document-skills/xlsx/SKILL.md,48ffe0c633c6279bb100ae59e0c3ec7f4d0a81d8,Apache-2.0,utility,referenced,Spreadsheet utility
+docx,ComposioHQ/awesome-claude-skills,document-skills/docx/SKILL.md,48ffe0c633c6279bb100ae59e0c3ec7f4d0a81d8,Apache-2.0,utility,vendored,Word doc round-trip
+artifacts-builder,ComposioHQ/awesome-claude-skills,artifacts-builder/SKILL.md,48ffe0c633c6279bb100ae59e0c3ec7f4d0a81d8,Apache-2.0,visual,vendored,Multi-component HTML artifacts (React/Tailwind/shadcn)
+canvas-design,ComposioHQ/awesome-claude-skills,canvas-design/SKILL.md,48ffe0c633c6279bb100ae59e0c3ec7f4d0a81d8,Apache-2.0,visual,vendored,Visual art / poster generation with design philosophy
+image-enhancer,ComposioHQ/awesome-claude-skills,image-enhancer/SKILL.md,48ffe0c633c6279bb100ae59e0c3ec7f4d0a81d8,Apache-2.0,visual,vendored,Image upscale / sharpen for figures
+theme-factory,ComposioHQ/awesome-claude-skills,theme-factory/SKILL.md,48ffe0c633c6279bb100ae59e0c3ec7f4d0a81d8,Apache-2.0,visual,vendored,Themes for slides / docs / HTML
+content-research-writer,ComposioHQ/awesome-claude-skills,content-research-writer/SKILL.md,48ffe0c633c6279bb100ae59e0c3ec7f4d0a81d8,Apache-2.0,writing,vendored,Citation-grounded content writing
+internal-comms,ComposioHQ/awesome-claude-skills,internal-comms/SKILL.md,48ffe0c633c6279bb100ae59e0c3ec7f4d0a81d8,Apache-2.0,writing,vendored,Status reports / leadership updates / FAQs
+changelog-generator,ComposioHQ/awesome-claude-skills,changelog-generator/SKILL.md,48ffe0c633c6279bb100ae59e0c3ec7f4d0a81d8,Apache-2.0,engineering,vendored,Git commits -> user-facing changelogs
+file-organizer,ComposioHQ/awesome-claude-skills,file-organizer/SKILL.md,48ffe0c633c6279bb100ae59e0c3ec7f4d0a81d8,Apache-2.0,engineering,vendored,Organize experiment outputs / dedupe
+webapp-testing,ComposioHQ/awesome-claude-skills,webapp-testing/SKILL.md,48ffe0c633c6279bb100ae59e0c3ec7f4d0a81d8,Apache-2.0,engineering,vendored,Browser-based webapp QA
+mcp-builder,ComposioHQ/awesome-claude-skills,mcp-builder/SKILL.md,48ffe0c633c6279bb100ae59e0c3ec7f4d0a81d8,Apache-2.0,engineering,vendored,Build new MCP servers (Python or TS)
+vault-reader,dl-research,custom,n/a,internal,company-private,custom,Read/write the DL Research Obsidian vault (PARA structure)
+web-research,dl-research,custom,n/a,internal,research-core,custom,Cursor built-in web tool + arXiv/bioRxiv/HF/GitHub workflow
+research-discussion,dl-research,custom,n/a,internal,governance,custom,PI<->user dialogue loop for hypothesis crystallization
+paper-plan,wanshuiyin/Auto-claude-code-research-in-sleep,skills/skills-codex/paper-plan/SKILL.md,f14037831b21469e66bd8bed5f9ce5f5a8f8c1f9,MIT,research-core,vendored,Paper planning workflow
+paper-write,wanshuiyin/Auto-claude-code-research-in-sleep,skills/skills-codex/paper-write/SKILL.md,f14037831b21469e66bd8bed5f9ce5f5a8f8c1f9,MIT,research-core,vendored,Paper drafting workflow
+paper-typeset,dl-research,custom,n/a,internal,publication,custom,Markdown -> arXiv-style HTML/PDF/LaTeX bundle (build_paper.py wrapper)
+paper-poster,wanshuiyin/Auto-claude-code-research-in-sleep,skills/skills-codex/paper-poster/SKILL.md,f14037831b21469e66bd8bed5f9ce5f5a8f8c1f9,MIT,research-core,vendored,Poster generation workflow
+paper-slides,wanshuiyin/Auto-claude-code-research-in-sleep,skills/skills-codex/paper-slides/SKILL.md,f14037831b21469e66bd8bed5f9ce5f5a8f8c1f9,MIT,research-core,vendored,Slides generation workflow
+prior-art-search,wanshuiyin/Auto-claude-code-research-in-sleep,skills/skills-codex/prior-art-search/SKILL.md,f14037831b21469e66bd8bed5f9ce5f5a8f8c1f9,MIT,research-core,vendored,Prior art and novelty workflow
+experiment-plan,wanshuiyin/Auto-claude-code-research-in-sleep,skills/skills-codex/experiment-plan/SKILL.md,f14037831b21469e66bd8bed5f9ce5f5a8f8c1f9,MIT,research-core,vendored,Experiment planning workflow
+run-experiment,wanshuiyin/Auto-claude-code-research-in-sleep,skills/skills-codex/run-experiment/SKILL.md,f14037831b21469e66bd8bed5f9ce5f5a8f8c1f9,MIT,research-core,vendored,Experiment execution workflow
+experiment-audit,wanshuiyin/Auto-claude-code-research-in-sleep,skills/skills-codex/experiment-audit/SKILL.md,f14037831b21469e66bd8bed5f9ce5f5a8f8c1f9,MIT,research-core,vendored,Experiment integrity checks
+citation-audit,wanshuiyin/Auto-claude-code-research-in-sleep,skills/skills-codex/citation-audit/SKILL.md,f14037831b21469e66bd8bed5f9ce5f5a8f8c1f9,MIT,research-core,vendored,Citation validity checks
+paper-claim-audit,wanshuiyin/Auto-claude-code-research-in-sleep,skills/skills-codex/paper-claim-audit/SKILL.md,f14037831b21469e66bd8bed5f9ce5f5a8f8c1f9,MIT,research-core,vendored,Claim-to-result consistency checks
+paper-write-matsuo,ymatsuo.com,information/how-to-write-paper-en,n/a,n/a,research-core,custom,Paper quality checklist based on Matsuo's writing guidance
+scrapling-research-harvest,D4Vinci/Scrapling,README.md,main,MIT,research-core,custom,Reliability ladder for web evidence collection on dynamic/anti-bot pages
+autosota-topology-optimizer,arxiv,2604.05550,n/a,n/a,governance,custom,Dynamic multi-agent topology optimization per theme profile
+pika-meeting-bridge,Pika-Labs/Pika-Skills,pikastream-video-meeting/SKILL.md,main,Apache-2.0,writing,custom,Optional external meeting bridge for decision capture and follow-up

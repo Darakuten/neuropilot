@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>DL Research — AIだけで動く研究所</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,700;1,400&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0e1a2b;
+    --ink-2: #14233a;
+    --ink-3: #1c2e49;
+    --paper: #f4ecdc;
+    --paper-dim: #ddd2bb;
+    --gold: #c9a24a;
+    --gold-bright: #e8c870;
+    --crimson: #b9433a;
+    --teal: #4ea59f;
+    --rule: rgba(244, 236, 220, 0.18);
+    --rule-strong: rgba(244, 236, 220, 0.42);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: radial-gradient(ellipse at 20% 0%, #182843 0%, var(--ink) 55%, #0a1322 100%);
+    color: var(--paper);
+    font-family: "Zen Kaku Gothic New", "Shippori Mincho", serif;
+    min-height: 100vh;
+    padding: 48px 24px 96px;
+    background-attachment: fixed;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      radial-gradient(rgba(244,236,220,.04) 1px, transparent 1px);
+    background-size: 3px 3px;
+    mix-blend-mode: overlay;
+    z-index: 0;
+  }
+  .poster {
+    position: relative;
+    z-index: 1;
+    max-width: 1240px;
+    margin: 0 auto;
+    border: 1px solid var(--rule-strong);
+    background:
+      radial-gradient(ellipse at 20% 0%, #182843 0%, var(--ink) 55%, #0a1322 100%),
+      repeating-linear-gradient(45deg, rgba(244,236,220,.012) 0 2px, transparent 2px 6px);
+    box-shadow:
+      0 80px 160px -60px rgba(0,0,0,.7),
+      inset 0 0 120px rgba(201,162,74,.06);
+    padding: 56px 56px 64px;
+  }
+  /* corner ornaments */
+  .corner {
+    position: absolute; width: 28px; height: 28px;
+    border-color: var(--gold);
+  }
+  .corner.tl { top: 14px; left: 14px; border-top: 1px solid; border-left: 1px solid; }
+  .corner.tr { top: 14px; right: 14px; border-top: 1px solid; border-right: 1px solid; }
+  .corner.bl { bottom: 14px; left: 14px; border-bottom: 1px solid; border-left: 1px solid; }
+  .corner.br { bottom: 14px; right: 14px; border-bottom: 1px solid; border-right: 1px solid; }
+
+  /* === MASTHEAD === */
+  .masthead {
+    text-align: center;
+    border-bottom: 1px solid var(--rule-strong);
+    padding-bottom: 28px;
+    position: relative;
+  }
+  .masthead .pretitle {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 16px;
+    letter-spacing: .35em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+  .masthead .establishment {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: .3em;
+    color: var(--paper-dim);
+    opacity: .65;
+    margin-bottom: 8px;
+  }
+  h1.title {
+    font-family: "Shippori Mincho", serif;
+    font-weight: 900;
+    font-size: 78px;
+    line-height: 1.05;
+    letter-spacing: 0.02em;
+    margin: 12px 0 6px;
+    color: var(--paper);
+    text-shadow: 0 1px 0 rgba(0,0,0,.4);
+  }
+  h1.title .accent { color: var(--gold-bright); font-style: italic; font-family: "Cormorant Garamond", serif; font-weight: 500; }
+  .subtitle {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 22px;
+    color: var(--paper-dim);
+    letter-spacing: .04em;
+  }
+  .ja-subtitle {
+    margin-top: 14px;
+    font-family: "Shippori Mincho", serif;
+    font-weight: 500;
+    font-size: 18px;
+    color: var(--paper-dim);
+    letter-spacing: .12em;
+  }
+  .ja-subtitle b { color: var(--gold-bright); font-weight: 700; }
+  .deck-row {
+    display: flex; justify-content: center; flex-wrap: wrap; gap: 14px 22px;
+    margin-top: 20px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: .25em;
+    color: var(--paper-dim);
+    opacity: .8;
+  }
+  .deck-row span { white-space: nowrap; }
+  .deck-row span::before { content: "◆ "; color: var(--gold); }
+
+  /* === SECTION HEADERS === */
+  .section-label {
+    display: flex; align-items: baseline; gap: 14px;
+    margin: 56px 0 22px;
+  }
+  .section-label .num {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    color: var(--gold);
+    font-size: 28px;
+  }
+  .section-label .label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: .35em;
+    text-transform: uppercase;
+    color: var(--paper-dim);
+  }
+  .section-label .rule {
+    flex: 1;
+    border-bottom: 1px dashed var(--rule);
+    transform: translateY(-4px);
+  }
+  .section-title {
+    font-family: "Shippori Mincho", serif;
+    font-weight: 700;
+    font-size: 32px;
+    margin: 0 0 6px;
+    color: var(--paper);
+  }
+  .section-deck {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    color: var(--gold-bright);
+    font-size: 15px;
+    margin-bottom: 24px;
+    letter-spacing: .03em;
+  }
+
+  /* === PHILOSOPHY (Section 1) === */
+  .philosophy {
+    display: grid;
+    grid-template-columns: 1fr 80px 1fr;
+    align-items: stretch;
+    gap: 0;
+    border: 1px solid var(--rule-strong);
+    border-radius: 2px;
+  }
+  .philo-side {
+    padding: 26px 28px;
+    position: relative;
+  }
+  .philo-side h3 {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: .35em;
+    text-transform: uppercase;
+    margin: 0 0 14px;
+    color: var(--paper-dim);
+  }
+  .philo-side .lead {
+    font-family: "Shippori Mincho", serif;
+    font-size: 22px; font-weight: 700;
+    line-height: 1.45;
+    margin-bottom: 12px;
+  }
+  .philo-side .note {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--paper-dim);
+  }
+  .philo-side.before { background: rgba(185, 67, 58, 0.08); }
+  .philo-side.before .lead { color: #f0bcb6; }
+  .philo-side.after { background: rgba(78, 165, 159, 0.10); }
+  .philo-side.after .lead { color: #b9e6e1; }
+  .philo-arrow {
+    display: flex; align-items: center; justify-content: center;
+    border-left: 1px solid var(--rule);
+    border-right: 1px solid var(--rule);
+    background: rgba(201,162,74,.08);
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--gold);
+    letter-spacing: .15em;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  /* === ORG CHART (Section 2) === */
+  .org-wrap {
+    background:
+      linear-gradient(180deg, rgba(20,35,58,.55), rgba(14,26,43,.4)),
+      repeating-linear-gradient(0deg, transparent 0 22px, rgba(244,236,220,.025) 22px 23px);
+    border: 1px solid var(--rule-strong);
+    padding: 36px 28px 30px;
+    position: relative;
+  }
+  .you-card {
+    margin: 0 auto 6px;
+    width: 360px;
+    text-align: center;
+    padding: 16px 22px;
+    border: 2px solid var(--gold-bright);
+    background: linear-gradient(180deg, rgba(232,200,112,.15), rgba(232,200,112,.02));
+    border-radius: 2px;
+    position: relative;
+  }
+  .you-card .role {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: .3em;
+    color: var(--gold-bright);
+    text-transform: uppercase;
+  }
+  .you-card .name {
+    font-family: "Shippori Mincho", serif;
+    font-weight: 900;
+    font-size: 28px;
+    color: var(--paper);
+    margin: 2px 0;
+  }
+  .you-card .duty {
+    font-size: 12px;
+    color: var(--paper-dim);
+    line-height: 1.5;
+  }
+  .you-card::before, .you-card::after {
+    content:""; position:absolute; width:8px; height:8px;
+    border:1px solid var(--gold-bright); background: var(--ink);
+  }
+  .you-card::before { top:-4px; left:-4px; }
+  .you-card::after { top:-4px; right:-4px; }
+
+  .vline {
+    width: 1px; height: 28px;
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold) 50%, transparent);
+    margin: 0 auto;
+  }
+  .pi-card {
+    margin: 0 auto;
+    width: 320px;
+    text-align: center;
+    padding: 14px 18px;
+    border: 1px solid var(--gold);
+    background: rgba(201,162,74,.10);
+  }
+  .pi-card .role { font-family:"JetBrains Mono",monospace; font-size:10px; letter-spacing:.3em; color: var(--gold); }
+  .pi-card .name { font-family:"Shippori Mincho",serif; font-weight:700; font-size:22px; margin:2px 0; }
+  .pi-card .duty { font-size:11px; color: var(--paper-dim); }
+
+  .org-grid {
+    margin-top: 22px;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 10px;
+  }
+  .agent {
+    grid-column: span 2;
+    border: 1px solid var(--rule);
+    background: rgba(244,236,220,.03);
+    padding: 14px 14px 12px;
+    position: relative;
+    transition: transform .25s ease, background .25s;
+  }
+  .agent:hover { transform: translateY(-2px); background: rgba(244,236,220,.07); }
+  .agent::before {
+    content:""; position:absolute; left: 50%; top: -22px;
+    width: 1px; height: 22px;
+    background: linear-gradient(180deg, transparent, var(--rule));
+  }
+  .agent .glyph {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    color: var(--gold);
+    font-size: 22px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .agent .role-tag {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px; letter-spacing: .3em;
+    color: var(--paper-dim);
+    text-transform: uppercase;
+  }
+  .agent .name {
+    font-family: "Shippori Mincho", serif;
+    font-weight: 700;
+    font-size: 18px;
+    margin: 2px 0 6px;
+    color: var(--paper);
+  }
+  .agent .duty {
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: var(--paper-dim);
+  }
+  .agent .badge {
+    margin-top: 8px;
+    display: inline-block;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px; letter-spacing: .15em;
+    padding: 2px 6px;
+    border: 1px solid var(--rule-strong);
+    color: var(--gold-bright);
+    text-transform: uppercase;
+  }
+  .agent.engineer-row {
+    grid-column: span 4;
+  }
+  .agent.engineer-row::before { display: none; }
+  .engineer-link {
+    grid-column: 1 / -1;
+    display: flex; justify-content: center;
+    margin-top: -2px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: .25em;
+    color: var(--paper-dim);
+    opacity: .55;
+  }
+
+  /* === PIPELINE (Section 3) === */
+  .pipeline {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--rule-strong);
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  .step {
+    padding: 22px 14px;
+    border-right: 1px solid var(--rule);
+    position: relative;
+  }
+  .step:last-child { border-right: none; }
+  .step .step-no {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 32px;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .step .step-name {
+    font-family: "Shippori Mincho", serif;
+    font-weight: 700;
+    font-size: 17px;
+    margin: 8px 0 4px;
+    color: var(--paper);
+  }
+  .step .step-actor {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: .25em;
+    color: var(--gold-bright);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .step .step-detail {
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: var(--paper-dim);
+  }
+  .step::after {
+    content: "→";
+    position: absolute;
+    right: -7px; top: 50%; transform: translateY(-50%);
+    color: var(--gold);
+    background: var(--ink);
+    padding: 0 1px;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 16px;
+    z-index: 2;
+  }
+  .step:last-child::after { display: none; }
+
+  /* === KEY INSIGHTS GRID === */
+  .insights {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-top: 24px;
+  }
+  .insight {
+    border: 1px solid var(--rule);
+    padding: 16px 16px 18px;
+    background: rgba(20,35,58,.4);
+  }
+  .insight .ico {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    color: var(--gold-bright);
+    font-size: 28px;
+    line-height: 1;
+  }
+  .insight .head {
+    font-family: "Shippori Mincho", serif;
+    font-weight: 700;
+    font-size: 16px;
+    margin: 6px 0 4px;
+    color: var(--paper);
+  }
+  .insight .body {
+    font-size: 11.5px;
+    line-height: 1.6;
+    color: var(--paper-dim);
+  }
+  .insight .body em { color: var(--gold-bright); font-style: normal; font-weight: 700; }
+
+  /* === FOOTER === */
+  .colophon {
+    margin-top: 56px;
+    padding-top: 22px;
+    border-top: 1px dashed var(--rule);
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 24px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: .25em;
+    color: var(--paper-dim);
+    opacity: .75;
+    text-transform: uppercase;
+  }
+  .colophon .center {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: .08em;
+    text-transform: none;
+    color: var(--gold-bright);
+    text-align: center;
+    opacity: 1;
+  }
+  .colophon .right { text-align: right; }
+
+  /* print / PDF — preserve dark design, single page sized to fit */
+  @media print {
+    html, body {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    body { padding: 0 !important; margin: 0 !important; }
+    body::before { display: none; }
+    .poster {
+      box-shadow: none !important;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+  }
+
+  /* responsive */
+  @media (max-width: 760px) {
+    .poster { padding: 32px 22px; }
+    h1.title { font-size: 48px; }
+    .org-grid { grid-template-columns: repeat(2, 1fr); }
+    .agent { grid-column: span 1; }
+    .agent.engineer-row { grid-column: span 2; }
+    .pipeline { grid-template-columns: repeat(2, 1fr); }
+    .step { border-right: none; border-bottom: 1px solid var(--rule); }
+    .step::after { content: "↓"; right: 50%; top: auto; bottom: -10px; transform: translateX(50%); }
+    .insights { grid-template-columns: repeat(2, 1fr); }
+    .philosophy { grid-template-columns: 1fr; }
+    .philo-arrow { padding: 12px; border-left: none; border-right: none; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  }
+</style>
+</head>
+<body>
+
+<article class="poster">
+  <span class="corner tl"></span>
+  <span class="corner tr"></span>
+  <span class="corner bl"></span>
+  <span class="corner br"></span>
+
+  <!-- ===================== MASTHEAD ===================== -->
+  <header class="masthead">
+    <div class="establishment">— Established 2026 · Powered by Paperclip Control Plane —</div>
+    <div class="pretitle">A Multi-Agent Research Laboratory</div>
+    <h1 class="title">AIだけで動く<span class="accent">研究所</span></h1>
+    <div class="subtitle">Nine autonomous agents. One human in the boardroom. A paper, every cycle.</div>
+    <div class="ja-subtitle">あなたは&nbsp;<b>取締役</b>。9名のAI研究員が&nbsp;<b>24時間</b>、<b>同じゴール</b>を追って働く。</div>
+    <div class="deck-row">
+      <span>論文工場</span>
+      <span>組織図駆動</span>
+      <span>ハードストップ予算</span>
+      <span>全プロセス監査可能</span>
+    </div>
+  </header>
+
+  <!-- ===================== SECTION 1 — PHILOSOPHY ===================== -->
+  <div class="section-label">
+    <span class="num">I.</span>
+    <span class="label">The Shift / 何が変わるのか</span>
+    <span class="rule"></span>
+  </div>
+  <h2 class="section-title">「AIに頼む」から「AI企業を経営する」へ</h2>
+  <p class="section-deck">From "asking an AI" to "running an AI company."</p>
+
+  <div class="philosophy">
+    <div class="philo-side before">
+      <h3>Before — 一般的なAI活用</h3>
+      <div class="lead">タブを20枚開いて、誰が何をやってるか分からない。</div>
+      <div class="note">
+        論文を読ませる、コードを書かせる、文章を直させる── プロンプトの羅列。<br>
+        トークンが暴走し、文脈は途切れ、再現できない。「研究」にならない。
+      </div>
+    </div>
+    <div class="philo-arrow">企業として<br>動かす</div>
+    <div class="philo-side after">
+      <h3>After — このプラットフォーム</h3>
+      <div class="lead">9名の研究員が、組織図と予算とゴールを持って働く。</div>
+      <div class="note">
+        役割・上司・KPI・タスクが全員に紐づく。人間は<b>承認・予算・戦略</b>だけ。<br>
+        全主張は実験ログと引用にトレース可能。論文として外に出せる。
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== SECTION 2 — ORG CHART ===================== -->
+  <div class="section-label">
+    <span class="num">II.</span>
+    <span class="label">The Cast / 9名の研究員</span>
+    <span class="rule"></span>
+  </div>
+  <h2 class="section-title">これがあなたの研究室です</h2>
+  <p class="section-deck">Your laboratory has nine employees. None of them sleep.</p>
+
+  <div class="org-wrap">
+
+    <div class="you-card">
+      <div class="role">— Board / 取締役 —</div>
+      <div class="name">あなた(人間)</div>
+      <div class="duty">ゴールを決める · 戦略承認 · 予算上限 · 最終チェック</div>
+    </div>
+    <div class="vline"></div>
+    <div class="pi-card">
+      <div class="role">CEO · Principal Investigator</div>
+      <div class="name">PI</div>
+      <div class="duty">研究戦略の総責任者。優先順位と最終決裁。</div>
+    </div>
+
+    <div class="org-grid">
+
+      <div class="agent">
+        <div class="glyph">α</div>
+        <div class="role-tag">Ideator</div>
+        <div class="name">アイデア生成役</div>
+        <div class="duty">検証可能な仮説を立て、何をもって「成功」とするか定義する。</div>
+        <div class="badge">FALSIFIABLE</div>
+      </div>
+
+      <div class="agent">
+        <div class="glyph">β</div>
+        <div class="role-tag">Lit Scout</div>
+        <div class="name">文献調査役</div>
+        <div class="duty">arXiv/bioRxivを毎日監視。先行研究と新規性リスクを洗い出す。</div>
+        <div class="badge">PRIOR ART</div>
+      </div>
+
+      <div class="agent">
+        <div class="glyph">γ</div>
+        <div class="role-tag">Experimenter</div>
+        <div class="name">実験設計役</div>
+        <div class="duty">仮説を実行可能な実験計画に変換。シード・ベースライン管理。</div>
+        <div class="badge">REPRODUCIBLE</div>
+      </div>
+
+      <div class="agent">
+        <div class="glyph">δ</div>
+        <div class="role-tag">Engineer · reports to Experimenter</div>
+        <div class="name">実装エンジニア</div>
+        <div class="duty">実験コードの実装と GPU 実行、ランタイム健全性の維持。</div>
+        <div class="badge">CODE & GPU</div>
+      </div>
+
+      <div class="agent">
+        <div class="glyph">ε</div>
+        <div class="role-tag">Critic</div>
+        <div class="name">監査役</div>
+        <div class="duty">主張・引用・実験健全性を別モデルで攻撃的にレビュー。過剰主張を却下。</div>
+        <div class="badge">ADVERSARIAL</div>
+      </div>
+
+      <div class="agent">
+        <div class="glyph">ζ</div>
+        <div class="role-tag">Writer</div>
+        <div class="name">執筆役</div>
+        <div class="duty">論文・ポスター・スライド・リバッタルを承認済みエビデンスから生成。</div>
+        <div class="badge">PUBLISH-READY</div>
+      </div>
+
+      <div class="agent">
+        <div class="glyph">η</div>
+        <div class="role-tag">Worker</div>
+        <div class="name">運用係</div>
+        <div class="duty">タスク整理、ハンドオフ、雑務。実験フローを止めない。</div>
+        <div class="badge">UNBLOCK</div>
+      </div>
+
+      <div class="agent">
+        <div class="glyph">θ</div>
+        <div class="role-tag">Mentor</div>
+        <div class="name">外部視点の助言役</div>
+        <div class="duty">節目のレビューでリスクと方針転換を提案。前提を揺さぶる。</div>
+        <div class="badge">STRATEGY</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================== SECTION 3 — PIPELINE ===================== -->
+  <div class="section-label">
+    <span class="num">III.</span>
+    <span class="label">The Cycle / 研究1サイクル</span>
+    <span class="rule"></span>
+  </div>
+  <h2 class="section-title">アイデアから論文まで、自動で1周する</h2>
+  <p class="section-deck">A single research cycle, end-to-end, with the human only at the gates.</p>
+
+  <div class="pipeline">
+    <div class="step">
+      <div class="step-no">01</div>
+      <div class="step-actor">YOU ↔ PI</div>
+      <div class="step-name">対話で<br>仮説化</div>
+      <div class="step-detail">ふんわりした問いを Socratic 対話で「反証可能な仮説」に絞り込む。</div>
+    </div>
+    <div class="step">
+      <div class="step-no">02</div>
+      <div class="step-actor">IDEATOR · LIT SCOUT</div>
+      <div class="step-name">先行研究<br>マッピング</div>
+      <div class="step-detail">arXiv/DBLPを横断。新規性ギャップと比較対象を確定。</div>
+    </div>
+    <div class="step">
+      <div class="step-no">03</div>
+      <div class="step-actor">YOU — APPROVAL GATE</div>
+      <div class="step-name">承認<br>ゲート</div>
+      <div class="step-detail">あなたが Approve & Launch を押すまで動かない。 否決もワンクリック。</div>
+    </div>
+    <div class="step">
+      <div class="step-no">04</div>
+      <div class="step-actor">EXPERIMENTER · ENGINEER</div>
+      <div class="step-name">実験<br>計画と実行</div>
+      <div class="step-detail">シード・ベースライン・ablationを揃え GPU で並列実行。</div>
+    </div>
+    <div class="step">
+      <div class="step-no">05</div>
+      <div class="step-actor">CRITIC</div>
+      <div class="step-name">主張<br>監査</div>
+      <div class="step-detail">別モデルで claim-to-evidence をゼロコンテキストで再検証。</div>
+    </div>
+    <div class="step">
+      <div class="step-no">06</div>
+      <div class="step-actor">WRITER</div>
+      <div class="step-name">論文<br>とスライド</div>
+      <div class="step-detail">arXiv体裁のPDF・ポスター・発表スライドを自動生成。</div>
+    </div>
+    <div class="step">
+      <div class="step-no">07</div>
+      <div class="step-actor">YOU — FINAL SIGN-OFF</div>
+      <div class="step-name">投稿<br>判断</div>
+      <div class="step-detail">あなたは「出す/直す」を判断するだけ。次サイクルの種も自動で出る。</div>
+    </div>
+  </div>
+
+  <!-- ===================== SECTION 4 — KEY INSIGHTS ===================== -->
+  <div class="section-label">
+    <span class="num">IV.</span>
+    <span class="label">Why It Matters / 何が凄いのか</span>
+    <span class="rule"></span>
+  </div>
+
+  <div class="insights">
+    <div class="insight">
+      <div class="ico">①</div>
+      <div class="head">24時間眠らない</div>
+      <div class="body">
+        <em>ハートビート</em>で全員がスケジュール起動。あなたが寝ていても先行研究調査・実験・執筆が並列で進む。
+      </div>
+    </div>
+    <div class="insight">
+      <div class="ico">②</div>
+      <div class="head">暴走しない</div>
+      <div class="body">
+        <em>トークン予算ハードストップ</em>と<em>承認ゲート</em>。コストが上限に達したら自動停止。重要決定はあなた経由。
+      </div>
+    </div>
+    <div class="insight">
+      <div class="ico">③</div>
+      <div class="head">嘘をつけない</div>
+      <div class="body">
+        Critic が<em>別モデル</em>で claim-to-evidence を再検証。引用も実験ログも全件トレース可能。
+      </div>
+    </div>
+    <div class="insight">
+      <div class="ico">④</div>
+      <div class="head">研究室まるごと持ち運べる</div>
+      <div class="body">
+        <em>1社=1ファイル</em>として export/import 可能。新テーマも別企業として並列起動できる。
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== COLOPHON ===================== -->
+  <footer class="colophon">
+    <div>DL-Research / agentcompanies.v1</div>
+    <div class="center">— You manage the <b>company</b>, not the prompts. —</div>
+    <div class="right">Control plane: Paperclip</div>
+  </footer>
+</article>
+
+</body>
+</html>

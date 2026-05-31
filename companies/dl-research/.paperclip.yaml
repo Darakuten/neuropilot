@@ -1,0 +1,132 @@
+schema: paperclip/v1
+
+# Adapter rationale (decided 2026-05-03):
+# - All agents use `cursor` adapter so a single Cursor subscription powers
+#   Claude (opus/sonnet) + GPT-5 (codex) + Gemini under one auth surface.
+# - Per-agent `model` is the *Cursor CLI model id* (verified against
+#   `cursor-agent --list-models` 2026.05.01-eea359f).
+# - Heartbeat is heartbeat-on-demand for governance agents; only Experimenter
+#   runs on a fixed cadence so experiments don't stall waiting for PI.
+# - If Cursor CLI is unavailable on the host, swap `adapter.type` to
+#   `claude_local` and provide ANTHROPIC_API_KEY as a fallback.
+
+agents:
+  pi:
+    adapter:
+      type: cursor
+      config:
+        model: claude-4.6-opus-high-thinking
+    runtime:
+      heartbeat:
+        enabled: false
+        wakeOnDemand: true
+    inputs:
+      env:
+        CURSOR_API_KEY:
+          kind: secret
+          requirement: optional
+        ANTHROPIC_API_KEY:
+          kind: secret
+          requirement: optional
+        OPENAI_API_KEY:
+          kind: secret
+          requirement: optional
+        GH_TOKEN:
+          kind: secret
+          requirement: optional
+  ideator:
+    adapter:
+      type: cursor
+      config:
+        model: claude-4.6-opus-high
+    runtime:
+      heartbeat:
+        enabled: false
+        wakeOnDemand: true
+  lit-scout:
+    adapter:
+      type: cursor
+      config:
+        model: gemini-3-flash
+    runtime:
+      heartbeat:
+        enabled: false
+        wakeOnDemand: true
+  experimenter:
+    adapter:
+      type: cursor
+      config:
+        model: gpt-5.2-codex-high
+    runtime:
+      heartbeat:
+        enabled: true
+        intervalSec: 1800
+        wakeOnDemand: true
+  engineer:
+    adapter:
+      type: cursor
+      config:
+        model: gpt-5.3-codex-fast
+    runtime:
+      heartbeat:
+        enabled: false
+        wakeOnDemand: true
+  critic:
+    adapter:
+      type: cursor
+      config:
+        model: claude-4.6-sonnet-medium-thinking
+    runtime:
+      heartbeat:
+        enabled: false
+        wakeOnDemand: true
+  writer:
+    adapter:
+      type: cursor
+      config:
+        model: claude-4.6-opus-high
+    runtime:
+      heartbeat:
+        enabled: false
+        wakeOnDemand: true
+  worker:
+    adapter:
+      type: cursor
+      config:
+        model: gpt-5.1-codex-mini
+    runtime:
+      heartbeat:
+        enabled: false
+        wakeOnDemand: true
+  mentor:
+    adapter:
+      type: cursor
+      config:
+        model: claude-4.6-opus-high-thinking
+    runtime:
+      heartbeat:
+        enabled: false
+        wakeOnDemand: true
+
+routines:
+  weekly-pi-review:
+    triggers:
+      - kind: schedule
+        cronExpression: "0 9 * * 1"
+        timezone: Asia/Tokyo
+    concurrencyPolicy: coalesce_if_active
+    catchUpPolicy: skip_missed
+  lit-watch-daily:
+    triggers:
+      - kind: schedule
+        cronExpression: "0 6 * * *"
+        timezone: Asia/Tokyo
+    concurrencyPolicy: coalesce_if_active
+    catchUpPolicy: skip_missed
+  monthly-budget-check:
+    triggers:
+      - kind: schedule
+        cronExpression: "0 10 1 * *"
+        timezone: Asia/Tokyo
+    concurrencyPolicy: coalesce_if_active
+    catchUpPolicy: skip_missed
