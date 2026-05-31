@@ -1,6 +1,6 @@
 ---
 name: DL Research
-description: Multi-agent autonomous research company for experiment execution and paper production
+description: Multi-agent autonomous research company specialized for AI x neuroengineering and neuroscience
 slug: dl-research
 schema: agentcompanies/v1
 version: 0.1.0
@@ -18,14 +18,14 @@ requirements:
     - GH_TOKEN
 ---
 
-DL Research is a Paperclip-based autonomous research organization.
+DL Research is a Paperclip-based autonomous research organization focused on AI x neuroengineering/neuroscience.
 
-The company runs a closed loop:
+The company runs a domain-focused closed loop:
 
-1. identify research opportunities and prior art
-2. design and execute experiments
-3. verify evidence quality and claim validity
-4. draft and refine paper artifacts
+1. identify opportunities and prior art in neural engineering/neuroscience
+2. design and execute ML/DL experiments for neural data and mechanisms
+3. verify evidence quality, citation integrity, and claim validity
+4. draft and refine paper-ready artifacts
 5. iterate using critique and governance checkpoints
 
 All work is company-scoped, tracked through issues/comments, and managed through heartbeat- and routine-based execution.
