@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "@/lib/router";
 import { useQuery } from "@tanstack/react-query";
 import { agentsApi, type OrgNode } from "../api/agents";
+import { heartbeatsApi, type LiveRunForIssue } from "../api/heartbeats";
 import { useCompany } from "../context/CompanyContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { queryKeys } from "../lib/queryKeys";
@@ -12,6 +13,8 @@ import { PageSkeleton } from "../components/PageSkeleton";
 import { AgentIcon } from "../components/AgentIconPicker";
 import { Download, Maximize2, Minus, Network, Plus, Upload } from "lucide-react";
 import { AGENT_ROLE_LABELS, type Agent } from "@paperclipai/shared";
+
+const LIVE_POLL_INTERVAL_MS = 2000;
 
 // Layout constants
 const CARD_W = 200;
@@ -185,6 +188,14 @@ export function OrgChart() {
     queryKey: queryKeys.agents.list(selectedCompanyId!),
     queryFn: () => agentsApi.list(selectedCompanyId!),
     enabled: !!selectedCompanyId,
+    refetchInterval: LIVE_POLL_INTERVAL_MS * 3,
+  });
+
+  const { data: liveRuns } = useQuery({
+    queryKey: queryKeys.liveRuns(selectedCompanyId!),
+    queryFn: () => heartbeatsApi.liveRunsForCompany(selectedCompanyId!, { minCount: 0, limit: 50 }),
+    enabled: !!selectedCompanyId,
+    refetchInterval: LIVE_POLL_INTERVAL_MS,
   });
 
   const agentMap = useMemo(() => {
@@ -192,6 +203,30 @@ export function OrgChart() {
     for (const a of agents ?? []) m.set(a.id, a);
     return m;
   }, [agents]);
+
+  const liveRunByAgent = useMemo(() => {
+    const m = new Map<string, LiveRunForIssue>();
+    for (const r of liveRuns ?? []) {
+      const existing = m.get(r.agentId);
+      if (!existing) {
+        m.set(r.agentId, r);
+        continue;
+      }
+      // prefer running > queued; then most recent
+      const score = (run: LiveRunForIssue) =>
+        (run.status === "running" ? 2 : run.status === "queued" ? 1 : 0) * 1e15 +
+        new Date(run.startedAt ?? run.createdAt).getTime();
+      if (score(r) > score(existing)) m.set(r.agentId, r);
+    }
+    return m;
+  }, [liveRuns]);
+
+  // tick every second to refresh elapsed labels without re-fetching
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNowTick(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
 
   useEffect(() => {
     setBreadcrumbs([{ label: "Org Chart" }]);
@@ -559,18 +594,42 @@ export function OrgChart() {
         >
           {allNodes.map((node) => {
             const agent = agentMap.get(node.id);
-            const dotColor = statusDotColor[node.status] ?? defaultDotColor;
+            const liveRun = liveRunByAgent.get(node.id);
+            const isLive = !!liveRun && (liveRun.status === "running" || liveRun.status === "queued");
+            const isError = node.status === "error";
+            const dotColor = isLive
+              ? statusDotColor.running
+              : statusDotColor[node.status] ?? defaultDotColor;
+            const accentColor = dotColor;
+            const model = (agent?.adapterConfig as { model?: string } | undefined)?.model ?? null;
+
+            const elapsedSec =
+              liveRun?.startedAt != null
+                ? Math.floor((nowTick - new Date(liveRun.startedAt).getTime()) / 1000)
+                : null;
 
             return (
               <div
                 key={node.id}
                 data-org-card
-                className="absolute bg-card border border-border rounded-lg shadow-sm hover:shadow-md hover:border-foreground/20 transition-[box-shadow,border-color] duration-150 cursor-pointer select-none"
+                data-status={node.status}
+                data-live={isLive ? "1" : "0"}
+                className="absolute rounded-lg cursor-pointer select-none transition-[box-shadow,border-color,transform] duration-200 hover:-translate-y-0.5"
                 style={{
                   left: node.x,
                   top: node.y,
                   width: CARD_W,
                   minHeight: CARD_H,
+                  background: isLive
+                    ? `linear-gradient(135deg, color-mix(in srgb, ${accentColor} 14%, var(--card)) 0%, var(--card) 70%)`
+                    : "var(--card)",
+                  border: `1px solid ${isLive ? accentColor + "AA" : isError ? accentColor + "88" : "var(--border)"}`,
+                  boxShadow: isLive
+                    ? `0 0 0 1px ${accentColor}55, 0 6px 26px -10px ${accentColor}aa, 0 2px 8px -2px rgba(0,0,0,0.45)`
+                    : isError
+                      ? `0 0 0 1px ${accentColor}55, 0 4px 18px -8px ${accentColor}88`
+                      : "0 1px 2px rgba(0,0,0,0.18)",
+                  animation: isLive ? "orgCardPulse 2.4s ease-in-out infinite" : undefined,
                 }}
                 onClick={() => navigate(agent ? agentUrl(agent) : `/agents/${node.id}`)}
                 onClickCapture={(e) => {
@@ -580,42 +639,166 @@ export function OrgChart() {
                   e.stopPropagation();
                 }}
               >
+                {/* Live activity ribbon (top edge) */}
+                {isLive ? (
+                  <div
+                    aria-hidden
+                    className="absolute inset-x-0 top-0 h-[3px] overflow-hidden rounded-t-lg"
+                  >
+                    <div
+                      style={{
+                        height: "100%",
+                        width: "200%",
+                        background: `linear-gradient(90deg, transparent 0%, ${accentColor} 35%, ${accentColor}cc 50%, ${accentColor} 65%, transparent 100%)`,
+                        animation: "orgCardSweep 1.6s linear infinite",
+                      }}
+                    />
+                  </div>
+                ) : null}
+
                 <div className="flex items-center px-4 py-3 gap-3">
                   {/* Agent icon + status dot */}
                   <div className="relative shrink-0">
-                    <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
-                      <AgentIcon icon={agent?.icon} className="h-4.5 w-4.5 text-foreground/70" />
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center"
+                      style={{
+                        background: isLive ? `${accentColor}22` : "var(--muted, #2a2f3a)",
+                        boxShadow: isLive ? `inset 0 0 0 1px ${accentColor}66` : undefined,
+                      }}
+                    >
+                      <AgentIcon
+                        icon={agent?.icon}
+                        className="h-4.5 w-4.5"
+                        style={{ color: isLive ? accentColor : undefined }}
+                      />
                     </div>
+                    {/* Status dot with pulse ring */}
                     <span
                       className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card"
-                      style={{ backgroundColor: dotColor }}
-                    />
+                      style={{
+                        backgroundColor: dotColor,
+                        boxShadow: isLive ? `0 0 8px ${dotColor}cc` : undefined,
+                      }}
+                    >
+                      {isLive ? (
+                        <span
+                          aria-hidden
+                          className="absolute inset-0 rounded-full"
+                          style={{
+                            boxShadow: `0 0 0 0 ${dotColor}88`,
+                            animation: "orgDotRipple 1.6s ease-out infinite",
+                          }}
+                        />
+                      ) : null}
+                    </span>
                   </div>
+
                   {/* Name + role + adapter type */}
                   <div className="flex flex-col items-start min-w-0 flex-1">
-                    <span className="text-sm font-semibold text-foreground leading-tight">
+                    <span className="text-sm font-semibold text-foreground leading-tight truncate w-full">
                       {node.name}
                     </span>
-                    <span className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                    <span className="text-[11px] text-muted-foreground leading-tight mt-0.5 truncate w-full">
                       {agent?.title ?? roleLabel(node.role)}
                     </span>
-                    {agent && (
+
+                    {/* Live: show what's happening; otherwise: adapter + (capabilities truncated) */}
+                    {isLive ? (
+                      <div className="flex items-center gap-1.5 mt-1.5 w-full">
+                        <span
+                          className="text-[10px] font-mono uppercase tracking-wide"
+                          style={{ color: accentColor }}
+                        >
+                          {liveRun!.status === "queued" ? "queued" : "running"}
+                        </span>
+                        {elapsedSec != null ? (
+                          <span className="text-[10px] text-muted-foreground/80 font-mono">
+                            · {elapsedSec}s
+                          </span>
+                        ) : null}
+                      </div>
+                    ) : isError ? (
+                      <span
+                        className="text-[10px] font-mono uppercase tracking-wide mt-1.5"
+                        style={{ color: accentColor }}
+                      >
+                        error
+                      </span>
+                    ) : agent && agent.capabilities ? (
+                      <span className="text-[10px] text-muted-foreground/80 leading-tight mt-1 line-clamp-1">
+                        {agent.capabilities}
+                      </span>
+                    ) : null}
+
+                    {/* Model badge — always shown when known */}
+                    {model ? (
+                      <span
+                        className="text-[10px] font-mono leading-tight mt-1 truncate w-full"
+                        style={{
+                          color: isLive ? accentColor : "var(--muted-foreground, rgba(255,255,255,0.5))",
+                          opacity: isLive ? 0.95 : 0.65,
+                        }}
+                        title={model}
+                      >
+                        {model}
+                      </span>
+                    ) : agent ? (
                       <span className="text-[10px] text-muted-foreground/60 font-mono leading-tight mt-1">
                         {getAdapterLabel(agent.adapterType)}
                       </span>
-                    )}
-                    {agent && agent.capabilities && (
-                      <span className="text-[10px] text-muted-foreground/80 leading-tight mt-1 line-clamp-2">
-                        {agent.capabilities}
-                      </span>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </div>
             );
           })}
         </div>
+
+        {/* Live counter pill (bottom-left of viewport) */}
+        {liveRunByAgent.size > 0 ? (
+          <div
+            className="absolute bottom-3 left-3 z-10 flex items-center gap-2 rounded-full border bg-background/80 backdrop-blur px-3 py-1.5 text-xs"
+            style={{
+              borderColor: statusDotColor.running + "55",
+              boxShadow: `0 0 16px -4px ${statusDotColor.running}66`,
+            }}
+          >
+            <span
+              aria-hidden
+              className="h-2 w-2 rounded-full"
+              style={{
+                background: statusDotColor.running,
+                boxShadow: `0 0 8px ${statusDotColor.running}`,
+                animation: "orgDotPulse 1.5s ease-in-out infinite",
+              }}
+            />
+            <span className="font-medium">{liveRunByAgent.size} live</span>
+            <span className="text-muted-foreground/70">
+              · {Array.from(liveRunByAgent.values()).map((r) => r.agentName).join(", ")}
+            </span>
+          </div>
+        ) : null}
       </div>
+
+      {/* CSS keyframes (scoped via inline style block) */}
+      <style>{`
+        @keyframes orgCardPulse {
+          0%, 100% { filter: brightness(1); }
+          50% { filter: brightness(1.05); }
+        }
+        @keyframes orgCardSweep {
+          0% { transform: translateX(-50%); }
+          100% { transform: translateX(0%); }
+        }
+        @keyframes orgDotRipple {
+          0% { box-shadow: 0 0 0 0 currentColor; opacity: 0.6; }
+          100% { box-shadow: 0 0 0 10px transparent; opacity: 0; }
+        }
+        @keyframes orgDotPulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.4); opacity: 0.7; }
+        }
+      `}</style>
     </div>
   );
 }
