@@ -664,13 +664,10 @@ export function OrgChart() {
                       style={{
                         background: isLive ? `${accentColor}22` : "var(--muted, #2a2f3a)",
                         boxShadow: isLive ? `inset 0 0 0 1px ${accentColor}66` : undefined,
+                        color: isLive ? accentColor : undefined,
                       }}
                     >
-                      <AgentIcon
-                        icon={agent?.icon}
-                        className="h-4.5 w-4.5"
-                        style={{ color: isLive ? accentColor : undefined }}
-                      />
+                      <AgentIcon icon={agent?.icon} className="h-4.5 w-4.5" />
                     </div>
                     {/* Status dot with pulse ring */}
                     <span
