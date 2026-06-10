@@ -1121,9 +1121,10 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
     const recoveryIssue = await waitForValue(async () =>
       db.select().from(issues).where(eq(issues.id, issueId)).then((rows) => {
         const issue = rows[0] ?? null;
-        return issue?.status === "blocked" ? issue : null;
+        return issue?.status === "todo" ? issue : null;
       })
     );
+    expect(recoveryIssue?.status).toBe("todo");
     expect(recoveryIssue?.assigneeAgentId).toBe(agentId);
     expect(recoveryIssue?.originKind).toBe("stranded_issue_recovery");
     expect(recoveryIssue?.originId).toBe(sourceIssueId);
@@ -1144,7 +1145,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
     expect(comments[0]?.body).toContain("recovery issues do not create nested `stranded_issue_recovery` issues");
     expect(comments[0]?.body).toContain("Latest retry failure details were withheld from the issue thread");
     expect(comments[0]?.body).not.toContain("sk-test-recovery-secret");
-    await expect(sourceBlockerIssueIds(companyId, sourceIssueId)).resolves.toEqual([issueId]);
+    await expect(sourceBlockerIssueIds(companyId, sourceIssueId)).resolves.toEqual([]);
   });
 
   it("does not block paused-tree work when immediate continuation recovery is suppressed by the hold", async () => {
@@ -1985,7 +1986,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
     await expect(sourceBlockerIssueIds(companyId, issueId)).resolves.toEqual([recoveries[0]?.id]);
   });
 
-  it("blocks stranded recovery issues in place instead of creating nested recovery issues", async () => {
+  it("keeps stranded recovery issues actionable instead of nesting recovery", async () => {
     const sourceIssueId = randomUUID();
     const { companyId, agentId, issueId, runId } = await seedStrandedIssueFixture({
       status: "in_progress",
@@ -2024,7 +2025,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
     expect(result.issueIds).toEqual([issueId]);
 
     const recoveryIssue = await db.select().from(issues).where(eq(issues.id, issueId)).then((rows) => rows[0] ?? null);
-    expect(recoveryIssue?.status).toBe("blocked");
+    expect(recoveryIssue?.status).toBe("todo");
     expect(recoveryIssue?.assigneeAgentId).toBe(agentId);
     expect(recoveryIssue?.originKind).toBe("stranded_issue_recovery");
     expect(recoveryIssue?.originId).toBe(sourceIssueId);
@@ -2044,7 +2045,9 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
     expect(comments[0]?.body).toContain("stopped automatic stranded-work recovery");
     expect(comments[0]?.body).toContain("Latest retry failure details were withheld from the issue thread");
     expect(comments[0]?.body).toContain("recovery issues do not create nested `stranded_issue_recovery` issues");
-    await expect(sourceBlockerIssueIds(companyId, sourceIssueId)).resolves.toEqual([issueId]);
+    await expect(sourceBlockerIssueIds(companyId, sourceIssueId)).resolves.toEqual([]);
+    const sourceAfter = await db.select().from(issues).where(eq(issues.id, sourceIssueId)).then((rows) => rows[0] ?? null);
+    expect(sourceAfter?.status).toBe("todo");
   });
 
   it("keeps repeated recovery failures on the same canonical recovery issue", async () => {
@@ -2130,7 +2133,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       .from(issues)
       .where(and(eq(issues.companyId, companyId), eq(issues.originKind, "stranded_issue_recovery"), eq(issues.originId, issueId)));
     expect(nestedRecoveries).toHaveLength(0);
-    await expect(sourceBlockerIssueIds(companyId, sourceIssueId)).resolves.toEqual([issueId]);
+    await expect(sourceBlockerIssueIds(companyId, sourceIssueId)).resolves.toEqual([]);
 
     const comments = await db.select().from(issueComments).where(eq(issueComments.issueId, issueId));
     expect(comments).toHaveLength(2);

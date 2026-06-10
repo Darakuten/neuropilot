@@ -13,14 +13,9 @@
 </p>
 
 <p align="center">
-  <img src="doc/visualizations/dl-research-overview.png" alt="NeuroPilot overview" width="920" />
-</p>
-
-<p align="center">
-  <a href="doc/visualizations/dl-research-overview.png"><strong>Social Preview Image</strong></a> ·
+  <a href="doc/visualizations/dl-research-overview.html"><strong>Architecture Overview</strong></a> ·
   <a href="#workflow-demo"><strong>Workflow Demo</strong></a> ·
-  <a href="companies/dl-research"><strong>DL Research Company Package</strong></a> ·
-  <a href="doc/visualizations/dl-research-overview.pdf"><strong>Architecture PDF</strong></a>
+  <a href="companies/dl-research"><strong>DL Research Company Package</strong></a>
 </p>
 
 ---
@@ -47,13 +42,10 @@ It coordinates specialized agents for:
 
 ## Workflow Demo
 
-![NeuroPilot workflow demo](doc/visualizations/neuropilot-demo.gif)
-
 This project is best understood as a single, continuous workflow:
 **hypothesis generation -> experiment execution -> paper artifact generation**.
 
-The animation above is a schematic demo (no live agent runs, no token cost).
-Full-quality video: [`doc/visualizations/neuropilot-demo.mp4`](doc/visualizations/neuropilot-demo.mp4)
+Schematic preview (deterministic HTML timeline): [`doc/visualizations/neuropilot-demo.html`](doc/visualizations/neuropilot-demo.html)
 
 Timeline:
 
@@ -64,6 +56,13 @@ Timeline:
 
 Recording playbook: [`doc/DEMO_VIDEO_PLAYBOOK.md`](doc/DEMO_VIDEO_PLAYBOOK.md)
 
+Generate GIF/MP4/PDF/PNG artifacts locally when needed (not committed by default):
+
+```bash
+node doc/visualizations/render-demo.mjs
+node doc/visualizations/render-pdf.mjs
+```
+
 ## Domain Specialization
 
 - **Research domain**: neural signals, BCI, neurophysiology, computational neuroscience
@@ -72,10 +71,9 @@ Recording playbook: [`doc/DEMO_VIDEO_PLAYBOOK.md`](doc/DEMO_VIDEO_PLAYBOOK.md)
 
 ## Demo
 
-- **Workflow demo (GIF)**: `doc/visualizations/neuropilot-demo.gif`
-- **Workflow demo (MP4)**: `doc/visualizations/neuropilot-demo.mp4`
-- **Architecture preview**: `doc/visualizations/dl-research-overview.png`
-- **Presentation PDF**: `doc/visualizations/dl-research-overview.pdf`
+- **Workflow schematic source**: `doc/visualizations/neuropilot-demo.html`
+- **Architecture source**: `doc/visualizations/dl-research-overview.html`
+- **Local render scripts**: `doc/visualizations/render-demo.mjs`, `doc/visualizations/render-pdf.mjs`
 - **Recording playbook**: `doc/DEMO_VIDEO_PLAYBOOK.md`
 
 ## PI demo flow (5 minutes)
@@ -116,14 +114,15 @@ pnpm paperclipai company import companies/dl-research --target new --newCompanyN
 - `server/`: orchestration API, heartbeat execution, governance services
 - `ui/`: board dashboard and operator UX
 - `packages/plugins/examples/dl-research-*`: research plugin examples
-- `doc/visualizations/`: overview poster, workflow demo (GIF/MP4), and PI presentation assets
+- `doc/visualizations/`: overview/demo HTML sources and local render scripts
 
 ## GitHub Social Preview setup
 
 GitHub repo Social Preview can be set from repository settings.
-Use this image for a clean PI-facing card:
+Generate the image first, then upload from repository settings:
 
-- Recommended image: `doc/visualizations/dl-research-overview.png`
+- Generate with: `node doc/visualizations/render-pdf.mjs`
+- Output image: `doc/visualizations/dl-research-overview.png`
 - Recommended text: `NeuroPilot — AI × Neuroengineering / Neuroscience`
 
 ## Project policy for GitHub top

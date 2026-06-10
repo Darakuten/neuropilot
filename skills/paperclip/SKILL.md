@@ -104,7 +104,7 @@ Headers: X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID
 { "status": "done", "comment": "What was done and why." }
 ```
 
-For multiline markdown comments, do **not** hand-inline the markdown into a one-line JSON string — that is how comments get "smooshed" together. Use the helper below (or an equivalent `jq --arg` pattern reading from a heredoc/file) so literal newlines survive JSON encoding:
+For multiline markdown comments, do **not** hand-inline the markdown into a one-line JSON string — that is how comments get "smooshed" together. Also **never** wrap a heredoc inside `curl -d "$(cat <<'PAYLOAD' ...)"` for multiline comment bodies; that pattern can truncate stored comments (for example, fenced `hypothesis-proposal` JSON gets cut off after `"version": 1`). Use the helpers below (or an equivalent `jq --arg` pattern reading from stdin/file) so literal newlines survive JSON encoding:
 
 ```bash
 scripts/paperclip-issue-update.sh --issue-id "$PAPERCLIP_TASK_ID" --status done <<'MD'
@@ -113,6 +113,30 @@ Done
 - Fixed the newline-preserving issue update path
 - Verified the raw stored comment body keeps paragraph breaks
 MD
+```
+
+For a standalone multiline comment POST, prefer:
+
+```bash
+scripts/paperclip-issue-comment.sh --issue-id "$PAPERCLIP_TASK_ID" <<'MD'
+## Update
+
+- Verified the raw stored comment body keeps full fenced JSON
+- Ready for the next heartbeat
+MD
+```
+
+If the helper is unavailable, the safe raw `curl` form is:
+
+```bash
+curl -sS -X POST \
+  "$PAPERCLIP_API_URL/api/issues/$PAPERCLIP_TASK_ID/comments" \
+  -H "Authorization: Bearer $PAPERCLIP_API_KEY" \
+  -H "X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID" \
+  -H 'Content-Type: application/json' \
+  --data-binary @- <<'PAYLOAD'
+{"body":"Line 1\n\nLine 2"}
+PAYLOAD
 ```
 
 Status values: `backlog`, `todo`, `in_progress`, `in_review`, `done`, `blocked`, `cancelled`. Priority values: `critical`, `high`, `medium`, `low`. Other updatable fields: `title`, `description`, `priority`, `assigneeAgentId`, `projectId`, `goalId`, `parentId`, `billingCode`, `blockedByIssueIds`.

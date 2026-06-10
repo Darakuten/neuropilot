@@ -8,7 +8,7 @@ description: |
   memory.
 metadata:
   classification: company-private
-  vault_root: "/Users/mz/研究自動化Multi-agent/paperclip/Obsidian Vault"
+  vault_root: "/Users/mz/Desktop/研究自動化Multi-agent/paperclip/Obsidian Vault"
   schema: "PARA + dated daily notes"
 ---
 
@@ -21,7 +21,7 @@ before any external web search.**
 
 ## Vault location
 
-`/Users/mz/研究自動化Multi-agent/paperclip/Obsidian Vault`
+`/Users/mz/Desktop/研究自動化Multi-agent/paperclip/Obsidian Vault`
 
 The path contains a non-ASCII character; quote it in shell.
 
@@ -44,7 +44,7 @@ The path contains a non-ASCII character; quote it in shell.
 
 1. **Start with `MOC/`** for any unfamiliar topic — it usually links to the
    3–10 most relevant notes.
-2. **Grep before list**: `rg -l "<query>" "/Users/mz/研究自動化Multi-agent/paperclip/Obsidian Vault" --type md` returns matching files fast. Limit to PARA folders to skip Templates/Attachments.
+2. **Grep before list**: `rg -l "<query>" "/Users/mz/Desktop/研究自動化Multi-agent/paperclip/Obsidian Vault" --type md` returns matching files fast. Limit to PARA folders to skip Templates/Attachments.
 3. **Follow `[[wiki-links]]`** in matched notes — Obsidian links are the
    knowledge graph; one match usually exposes a cluster.
 4. **Check `1_Daily/<recent-week>/`** if the user mentions a recent
@@ -88,6 +88,8 @@ When you produce consolidated insights worth keeping:
 
 - The vault is git-tracked (`.git/` exists in vault root). Don't `git
   commit` unless the human explicitly asks.
+- Regeneration workflow for `vault-index.json` / `context-graph.json` is
+  documented in `companies/dl-research/docs/vault-index-regeneration.md`.
 - Some files are large (e.g. `context-graph.html` is ~150KB). Use
   `head -100` or grep for content rather than reading the whole file when
   scanning.

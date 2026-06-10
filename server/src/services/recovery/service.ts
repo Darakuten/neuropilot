@@ -43,6 +43,7 @@ import {
   type IssueLivenessFinding,
 } from "./issue-graph-liveness.js";
 import { isAutomaticRecoverySuppressedByPauseHold } from "./pause-hold-guard.js";
+import { isChatStyleDiscussionIssue } from "../discussion-issue.js";
 
 const EXECUTION_PATH_HEARTBEAT_RUN_STATUSES = ["queued", "running", "scheduled_retry"] as const;
 const UNSUCCESSFUL_HEARTBEAT_RUN_TERMINAL_STATUSES = ["failed", "cancelled", "timed_out"] as const;
@@ -1423,7 +1424,7 @@ export function recoveryService(db: Db, deps: { enqueueWakeup: RecoveryWakeup })
       failureSummary ? `- Failure: ${failureSummary.trim()}` : "- Failure: none recorded",
       "- Guard: recovery issues do not create nested `stranded_issue_recovery` issues.",
       "",
-      "Next action: the current recovery owner should inspect the failed run evidence, restore a live execution path or record the manual resolution, then move this recovery issue out of `blocked`.",
+      "Next action: the current recovery owner should inspect the failed run evidence, restore a live execution path or record the manual resolution, then mark this recovery issue done.",
     ].join("\n");
   }
 
@@ -1432,7 +1433,7 @@ export function recoveryService(db: Db, deps: { enqueueWakeup: RecoveryWakeup })
     previousStatus: "todo" | "in_progress";
     latestRun: LatestIssueRun;
   }) {
-    const updated = await issuesSvc.update(input.issue.id, { status: "blocked" });
+    const updated = await issuesSvc.update(input.issue.id, { status: "todo" });
     if (!updated) return null;
 
     const prefix = await getCompanyIssuePrefix(input.issue.companyId);
@@ -1458,7 +1459,7 @@ export function recoveryService(db: Db, deps: { enqueueWakeup: RecoveryWakeup })
       entityId: input.issue.id,
       details: {
         identifier: input.issue.identifier,
-        status: "blocked",
+        status: "todo",
         previousStatus: input.previousStatus,
         source: "recovery.reconcile_stranded_recovery_issue",
         latestRunId: input.latestRun?.id ?? null,
@@ -1468,6 +1469,8 @@ export function recoveryService(db: Db, deps: { enqueueWakeup: RecoveryWakeup })
         originId: input.issue.originId,
       },
     });
+
+    await releaseSourceIssueFromEscalatedStrandedRecovery(input.issue);
 
     return updated;
   }
@@ -1506,6 +1509,60 @@ export function recoveryService(db: Db, deps: { enqueueWakeup: RecoveryWakeup })
         ),
       )
       .then((rows) => rows.map((row) => row.blockerIssueId));
+  }
+
+  /**
+   * When a stranded recovery issue is escalated in place (automatic recovery exhausted),
+   * keeping the source issue blocked on that recovery creates a deadlock. Release the
+   * edge so the source can resume; the recovery issue remains for manual follow-up.
+   */
+  async function releaseSourceIssueFromEscalatedStrandedRecovery(
+    recoveryIssue: typeof issues.$inferSelect,
+  ): Promise<void> {
+    if (recoveryIssue.originKind !== STRANDED_ISSUE_RECOVERY_ORIGIN_KIND) return;
+    const sourceIssueId = recoveryIssue.originId;
+    if (!sourceIssueId) return;
+
+    const sourceIssue = await db
+      .select()
+      .from(issues)
+      .where(and(eq(issues.companyId, recoveryIssue.companyId), eq(issues.id, sourceIssueId)))
+      .then((rows) => rows[0] ?? null);
+    if (!sourceIssue) return;
+    if (["done", "cancelled"].includes(sourceIssue.status)) return;
+
+    const blockerIds = await existingBlockerIssueIds(sourceIssue.companyId, sourceIssue.id);
+    if (!blockerIds.includes(recoveryIssue.id)) return;
+
+    const nextBlockerIds = blockerIds.filter((id) => id !== recoveryIssue.id);
+    const patch: { blockedByIssueIds: string[]; status?: typeof issues.$inferSelect.status } = {
+      blockedByIssueIds: nextBlockerIds,
+    };
+    if (sourceIssue.status === "blocked" && nextBlockerIds.length === 0) {
+      const hasAssignee = Boolean(sourceIssue.assigneeAgentId ?? sourceIssue.assigneeUserId);
+      patch.status = hasAssignee ? "in_progress" : "todo";
+    }
+
+    await issuesSvc.update(sourceIssue.id, patch);
+
+    await logActivity(db, {
+      companyId: sourceIssue.companyId,
+      actorType: "system",
+      actorId: "system",
+      agentId: null,
+      runId: null,
+      action: "issue.updated",
+      entityType: "issue",
+      entityId: sourceIssue.id,
+      details: {
+        identifier: sourceIssue.identifier,
+        source: "recovery.release_source_after_stranded_recovery_escalation",
+        removedBlockerIssueId: recoveryIssue.id,
+        recoveryIssueIdentifier: recoveryIssue.identifier,
+        nextBlockedByIssueIds: nextBlockerIds,
+        nextStatus: patch.status ?? sourceIssue.status,
+      },
+    });
   }
 
   async function escalateStrandedAssignedIssue(input: {
@@ -1610,6 +1667,16 @@ export function recoveryService(db: Db, deps: { enqueueWakeup: RecoveryWakeup })
 
       const agent = await getAgent(agentId);
       if (!agent || agent.companyId !== issue.companyId || !isAgentInvokable(agent)) {
+        result.skipped += 1;
+        continue;
+      }
+
+      // Chat-style discussion threads (the canonical Research Chat issue and
+      // any `[Discuss-…]` review thread) are operator-driven and must not be
+      // poked by the recovery loop. Their assignee replies on operator
+      // comments only; an automatic continuation/recovery wake here causes
+      // chat noise and was the source of "サイレント終了" loops in PR review.
+      if (isChatStyleDiscussionIssue(issue)) {
         result.skipped += 1;
         continue;
       }

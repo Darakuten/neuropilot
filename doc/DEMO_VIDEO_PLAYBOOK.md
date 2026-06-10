@@ -62,13 +62,13 @@ Second, experiments run through tracked multi-agent workflows with reproducible 
 Third, claim and citation audits validate scientific integrity before paper outputs are generated.  
 From idea to publication, NeuroPilot provides one control plane for PI-level oversight."
 
-## Generated assets (in repository)
+## Generated assets (local build outputs)
 
-The README embeds a schematic workflow animation generated from synthetic UI frames (no live agent runs):
+The README uses HTML sources and local rendering scripts. GIF/MP4 outputs are generated from synthetic UI frames (no live agent runs):
 
-- `doc/visualizations/neuropilot-demo.gif` — inline autoplay in README
-- `doc/visualizations/neuropilot-demo.mp4` — full-quality download
 - `doc/visualizations/neuropilot-demo.html` — source animation (deterministic `window.__seek(ms)` API)
+- `doc/visualizations/neuropilot-demo.gif` — generated local output
+- `doc/visualizations/neuropilot-demo.mp4` — generated local output
 
 Regenerate after editing the HTML:
 
@@ -77,6 +77,12 @@ node doc/visualizations/render-demo.mjs
 ```
 
 This captures ~500 frames at 20fps (25 seconds), encodes MP4 + palette-optimized GIF, and removes temporary frame files automatically.
+
+Generate overview PDF/PNG with:
+
+```bash
+node doc/visualizations/render-pdf.mjs
+```
 
 ## Note on demo fidelity
 

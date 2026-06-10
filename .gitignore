@@ -56,3 +56,8 @@ tests/release-smoke/test-results/
 tests/release-smoke/playwright-report/
 .superset/
 .claude/worktrees/
+Obsidian Vault/
+doc/visualizations/*.gif
+doc/visualizations/*.mp4
+doc/visualizations/*.png
+doc/visualizations/*.pdf

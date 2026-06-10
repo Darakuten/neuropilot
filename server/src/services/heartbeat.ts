@@ -6437,8 +6437,23 @@ export function heartbeatService(db: Db, options: HeartbeatServiceOptions = {}) 
         };
       }
 
+      const hasOpenChildIssues = await tx
+        .select({ id: issues.id })
+        .from(issues)
+        .where(
+          and(
+            eq(issues.companyId, issue.companyId),
+            eq(issues.parentId, issue.id),
+            isNull(issues.hiddenAt),
+            notInArray(issues.status, ["done", "cancelled"]),
+          ),
+        )
+        .limit(1)
+        .then((rows) => rows.length > 0);
+
       const issueNeedsImmediateRecovery =
         (issue.status === "todo" || issue.status === "in_progress") &&
+        !hasOpenChildIssues &&
         !issue.assigneeUserId &&
         issue.assigneeAgentId === run.agentId &&
         (run.status === "failed" || run.status === "timed_out" || run.status === "cancelled");

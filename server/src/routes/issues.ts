@@ -78,6 +78,10 @@ import { feedbackService } from "../services/feedback.js";
 import { instanceSettingsService } from "../services/instance-settings.js";
 import { environmentService } from "../services/environments.js";
 import {
+  isChatStyleDiscussionIssue as isResearchDiscussionIssue,
+  isChatStyleNoWakeComment as isResearchDiscussionNoWakeComment,
+} from "../services/discussion-issue.js";
+import {
   applyIssueExecutionPolicyTransition,
   normalizeIssueExecutionPolicy,
   parseIssueExecutionState,
@@ -203,6 +207,25 @@ function shouldImplicitlyMoveCommentedIssueToTodo(input: {
 
 function isExplicitResumeCapableStatus(status: string | null | undefined) {
   return status === "done" || status === "blocked" || status === "todo" || status === "in_progress";
+}
+
+
+async function isAssigneeSelfComment(input: {
+  assigneeAgentId: string | null | undefined;
+  actor: { actorType: "agent" | "user"; actorId: string; runId?: string | null };
+  heartbeat: ReturnType<typeof heartbeatService>;
+}) {
+  if (typeof input.assigneeAgentId !== "string" || input.assigneeAgentId.length === 0) return false;
+  if (input.actor.actorType === "agent") {
+    return input.actor.actorId === input.assigneeAgentId;
+  }
+  if (typeof input.actor.runId !== "string" || input.actor.runId.length === 0) return false;
+  try {
+    const run = await input.heartbeat.getRun(input.actor.runId);
+    return run?.agentId === input.assigneeAgentId;
+  } catch {
+    return false;
+  }
 }
 
 function queueResolvedInteractionContinuationWakeup(input: {
@@ -658,6 +681,45 @@ export function issueRoutes(
         },
       });
     }
+    return true;
+  }
+
+  async function assertAgentIssueCommentAllowed(
+    req: Request,
+    res: Response,
+    issue: { id: string; companyId: string; status: string; assigneeAgentId: string | null },
+    intent: { reopenRequested: boolean; resumeRequested: boolean; interruptRequested: boolean },
+  ) {
+    if (req.actor.type !== "agent") return true;
+    const actorAgentId = req.actor.agentId;
+    if (!actorAgentId) {
+      res.status(403).json({ error: "Agent authentication required" });
+      return false;
+    }
+    if (issue.assigneeAgentId === null || issue.assigneeAgentId === actorAgentId) {
+      return true;
+    }
+    if (await hasActiveCheckoutManagementOverride(actorAgentId, issue.companyId, issue.assigneeAgentId)) {
+      return true;
+    }
+    if (intent.reopenRequested || intent.resumeRequested || intent.interruptRequested) {
+      res.status(403).json({
+        error: "Agent cannot request issue-control actions for another agent's issue",
+        details: {
+          issueId: issue.id,
+          assigneeAgentId: issue.assigneeAgentId,
+          actorAgentId,
+          requested: {
+            reopen: intent.reopenRequested,
+            resume: intent.resumeRequested,
+            interrupt: intent.interruptRequested,
+          },
+        },
+      });
+      return false;
+    }
+    // Plain comments are allowed across same-company agents so assignees
+    // can receive review handoffs and coordination requests.
     return true;
   }
 
@@ -2560,7 +2622,7 @@ export function issueRoutes(
       if (commentBody && comment) {
         const assigneeId = issue.assigneeAgentId;
         const actorIsAgent = actor.actorType === "agent";
-        const selfComment = actorIsAgent && actor.actorId === assigneeId;
+        const selfComment = await isAssigneeSelfComment({ assigneeAgentId: assigneeId, actor, heartbeat });
         const skipAssigneeCommentWake = selfComment || isClosed;
 
         if (assigneeId && !assigneeChanged && (reopened || !skipAssigneeCommentWake)) {
@@ -3406,7 +3468,16 @@ export function issueRoutes(
       return;
     }
     assertCompanyAccess(req, issue.companyId);
-    if (!(await assertAgentIssueMutationAllowed(req, res, issue))) return;
+    const reopenRequested = req.body.reopen === true;
+    const resumeRequested = req.body.resume === true;
+    const interruptRequested = req.body.interrupt === true;
+    if (
+      !(await assertAgentIssueCommentAllowed(req, res, issue, {
+        reopenRequested,
+        resumeRequested,
+        interruptRequested,
+      }))
+    ) return;
     const closedExecutionWorkspace = await getClosedIssueExecutionWorkspace(issue);
     if (closedExecutionWorkspace) {
       respondClosedIssueExecutionWorkspace(res, closedExecutionWorkspace);
@@ -3414,9 +3485,6 @@ export function issueRoutes(
     }
 
     const actor = getActorInfo(req);
-    const reopenRequested = req.body.reopen === true;
-    const resumeRequested = req.body.resume === true;
-    const interruptRequested = req.body.interrupt === true;
     if (resumeRequested === true && !(await assertExplicitResumeIntentAllowed(req, res, issue))) return;
     if (resumeRequested !== true && reopenRequested === true && req.actor.type === "agent") {
       if (!(await assertExplicitResumeIntentAllowed(req, res, issue))) return;
@@ -3508,6 +3576,20 @@ export function issueRoutes(
       runId: actor.runId,
     });
     await issueReferencesSvc.syncComment(comment.id);
+    const selfComment = await isAssigneeSelfComment({
+      assigneeAgentId: currentIssue.assigneeAgentId,
+      actor,
+      heartbeat,
+    });
+    const suppressResearchDiscussionWake = isResearchDiscussionNoWakeComment(currentIssue, req.body.body);
+    if (
+      (selfComment || suppressResearchDiscussionWake) &&
+      currentIssue.status === "in_progress" &&
+      isResearchDiscussionIssue(currentIssue)
+    ) {
+      const settledIssue = await svc.update(currentIssue.id, { status: "todo" });
+      if (settledIssue) currentIssue = settledIssue;
+    }
     const commentReferenceSummaryAfter = await issueReferencesSvc.listIssueReferenceSummary(currentIssue.id);
     const commentReferenceDiff = issueReferencesSvc.diffIssueReferenceSummary(
       commentReferenceSummaryBefore,
@@ -3564,8 +3646,7 @@ export function issueRoutes(
       const wakeups = new Map<string, Parameters<typeof heartbeat.wakeup>[1]>();
       const assigneeId = currentIssue.assigneeAgentId;
       const actorIsAgent = actor.actorType === "agent";
-      const selfComment = actorIsAgent && actor.actorId === assigneeId;
-      const skipWake = selfComment || isClosed;
+      const skipWake = selfComment || suppressResearchDiscussionWake || isClosed;
       if (assigneeId && (reopened || !skipWake)) {
         if (reopened) {
           wakeups.set(assigneeId, {

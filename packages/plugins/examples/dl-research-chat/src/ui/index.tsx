@@ -6,144 +6,19 @@ import {
   type PluginPageProps,
   type PluginSidebarProps,
 } from "@paperclipai/plugin-sdk/ui";
-
-type ChildIssueProposal = {
-  role: string;
-  title: string;
-  priority?: "low" | "medium" | "high" | "urgent";
-  deliverable?: string;
-  dependsOn?: string[];
-};
-type HypothesisProposal = {
-  version: number;
-  title: string;
-  summary?: string;
-  hypothesis: string;
-  successCriteria: string[];
-  scope?: { timeBudget?: string; computeBudget?: string; constraints?: string[] };
-  differentiatedFrom?: Array<{ title: string; year?: string; venue?: string; delta?: string }>;
-  proposedProject:
-    | { mode: "create-new"; name: string; color?: string; targetDate?: string }
-    | { mode: "existing"; projectId: string };
-  childIssues: ChildIssueProposal[];
-};
-
-type ChatMessage = {
-  id: string;
-  authorKind: "user" | "pi" | "system";
-  authorLabel: string;
-  body: string;
-  createdAt: string;
-  proposals?: HypothesisProposal[];
-  proposalParseError?: {
-    raw: string;
-  };
-};
-type ActiveRun = {
-  id: string;
-  status: string;
-  startedAt: string | null;
-  elapsedSec: number | null;
-  triggerDetail: string;
-  model: string | null;
-};
-type ChatPayload = {
-  companyId: string;
-  issueId: string;
-  issueIdentifier: string;
-  issueTitle: string;
-  piAgentId: string;
-  piAgentName: string;
-  piAgentStatus: string;
-  piModel: string | null;
-  messages: ChatMessage[];
-  activeRun: ActiveRun | null;
-  latestProposal: {
-    messageId: string;
-    createdAt: string;
-    proposal: HypothesisProposal;
-    promoted: boolean;
-  } | null;
-  latestMalformedProposal: {
-    messageId: string;
-    createdAt: string;
-    raw: string;
-  } | null;
-  researchCycle: ResearchCycleSummary | null;
-  fetchedAt: string;
-};
-
-type ResearchCycleNode = {
-  id: string;
-  identifier: string;
-  title: string;
-  status: string;
-  phase: number;
-  progressPct: number;
-  blockedBy: string[];
-};
-
-type ResearchCyclePhase = {
-  phase: number;
-  label: string;
-  progressPct: number;
-  terminalPct: number;
-  total: number;
-  done: number;
-  cancelled: number;
-  inFlight: number;
-  blocked: number;
-  todo: number;
-};
-
-type ResearchCycleSummary = {
-  themeIssueId: string;
-  themeIssueIdentifier: string;
-  themeTitle: string;
-  themeStatus: string;
-  totalPhases: number;
-  currentPhase: number;
-  overallProgressPct: number;
-  overallTerminalPct: number;
-  totalNodeCount: number;
-  doneNodeCount: number;
-  cancelledNodeCount: number;
-  phaseProgress: ResearchCyclePhase[];
-  nodes: ResearchCycleNode[];
-};
-
-type CyclePayload = {
-  companyId: string;
-  researchCycle: ResearchCycleSummary | null;
-  fetchedAt: string;
-};
-
-type PromoteResult = {
-  themeIssueId: string;
-  themeIssueIdentifier: string;
-  projectId: string;
-  projectName: string;
-  projectCreated: boolean;
-  childIssues: Array<{
-    id: string;
-    identifier: string;
-    role: string;
-    title: string;
-    assigneeAgentId: string | null;
-    assigneeAgentName: string | null;
-    blockedByCount: number;
-  }>;
-  unresolvedRoles: string[];
-};
-
-type UploadedAttachment = {
-  id: string;
-  originalFilename: string | null;
-  contentType: string;
-  byteSize: number;
-  objectKey: string;
-  contentPath: string;
-};
+import type {
+  ActiveRun,
+  ChatMessage,
+  ChatPayload,
+  ChildIssueProposal,
+  CyclePayload,
+  HypothesisProposal,
+  PromoteResult,
+  ResearchCycleNode,
+  ResearchCycleSummary,
+  UploadedAttachment,
+} from "./types.js";
+import { fileIcon, formatBytes, formatRelative, statusColor } from "./utils.js";
 
 const POLL_INTERVAL_MS = 4000;
 const MAX_FILES_PER_MESSAGE = 8;
@@ -170,49 +45,6 @@ const containerStyle: React.CSSProperties = {
   fontFamily: "ui-sans-serif, system-ui, -apple-system, 'Inter', sans-serif",
   position: "relative",
 };
-
-function formatRelative(iso: string): string {
-  const then = new Date(iso).getTime();
-  const now = Date.now();
-  const sec = Math.floor((now - then) / 1000);
-  if (sec < 5) return "now";
-  if (sec < 60) return `${sec}s ago`;
-  if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
-  if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
-  return new Date(iso).toLocaleString();
-}
-
-function formatBytes(n: number): string {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} MB`;
-  return `${(n / 1024 / 1024 / 1024).toFixed(2)} GB`;
-}
-
-function fileIcon(name: string | null, mime: string): string {
-  const lower = (name ?? "").toLowerCase();
-  if (mime === "application/pdf" || lower.endsWith(".pdf")) return "PDF";
-  if (lower.endsWith(".md") || mime.startsWith("text/markdown")) return "MD";
-  if (lower.endsWith(".txt") || mime === "text/plain") return "TXT";
-  if (lower.endsWith(".csv")) return "CSV";
-  if (lower.endsWith(".json")) return "JSON";
-  if (lower.endsWith(".pptx") || lower.endsWith(".ppt")) return "PPT";
-  if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) return "XLS";
-  if (lower.endsWith(".docx") || lower.endsWith(".doc")) return "DOC";
-  if (lower.endsWith(".tex")) return "TeX";
-  if (mime.startsWith("image/")) return "IMG";
-  if (mime.startsWith("video/")) return "VID";
-  if (mime.startsWith("audio/")) return "AUD";
-  return "FILE";
-}
-
-function statusColor(status: string): string {
-  if (status === "done" || status === "completed") return COLORS.pi;
-  if (status === "cancelled") return COLORS.muted;
-  if (status === "in_review" || status === "in_progress" || status === "running") return COLORS.accent;
-  if (status === "blocked") return COLORS.danger;
-  return COLORS.muted;
-}
 
 function ResearchCycleTreeCard({
   cycle,
@@ -297,7 +129,7 @@ function ResearchCycleTreeCard({
               {node.identifier ? `${node.identifier} · ` : ""}
               {node.title}
             </a>
-            <span style={{ color: statusColor(node.status), textTransform: "uppercase", fontSize: 10 }}>
+            <span style={{ color: statusColor(node.status, COLORS), textTransform: "uppercase", fontSize: 10 }}>
               {node.status}
             </span>
             <span style={{ color: COLORS.muted, fontSize: 11 }}>{node.progressPct}%</span>
@@ -400,7 +232,7 @@ function ResearchCycleBlockDiagram({ cycle }: { cycle: ResearchCycleSummary }) {
         {cycle.nodes.map((node) => {
           const pos = nodePos.get(node.id);
           if (!pos) return null;
-          const accent = statusColor(node.status);
+          const accent = statusColor(node.status, COLORS);
           return (
             <g key={node.id} transform={`translate(${pos.x}, ${pos.y})`}>
               <rect
