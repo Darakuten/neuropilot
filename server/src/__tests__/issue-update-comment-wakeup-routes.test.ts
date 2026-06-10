@@ -142,7 +142,7 @@ function registerModuleMocks() {
   }));
 }
 
-async function createApp() {
+async function createApp(actorOverrides?: Record<string, unknown>) {
   const [{ errorHandler }, { issueRoutes }] = await Promise.all([
     vi.importActual<typeof import("../middleware/index.js")>("../middleware/index.js"),
     vi.importActual<typeof import("../routes/issues.js")>("../routes/issues.js"),
@@ -156,6 +156,7 @@ async function createApp() {
       companyIds: ["company-1"],
       source: "local_implicit",
       isInstanceAdmin: false,
+      ...(actorOverrides ?? {}),
     };
     next();
   });
@@ -289,5 +290,39 @@ describe("issue update comment wakeups", () => {
         }),
       }),
     );
+  });
+
+  it("does not re-wake the assignee when a board-fallback comment came from the assignee run", async () => {
+    const existing = makeIssue({
+      assigneeAgentId: ASSIGNEE_AGENT_ID,
+      assigneeUserId: null,
+      status: "in_progress",
+    });
+    mockIssueService.getById.mockResolvedValue(existing);
+    mockIssueService.update.mockResolvedValue(existing);
+    mockIssueService.addComment.mockResolvedValue({
+      id: "comment-self-run",
+      issueId: existing.id,
+      companyId: existing.companyId,
+      body: "reply from the current run",
+      createdByRunId: "run-from-assignee",
+    });
+    mockHeartbeatService.getRun.mockResolvedValue({
+      id: "run-from-assignee",
+      agentId: ASSIGNEE_AGENT_ID,
+    });
+
+    const res = await request(
+      await createApp({
+        runId: "run-from-assignee",
+      }),
+    )
+      .patch(`/api/issues/${existing.id}`)
+      .send({
+        comment: "reply from the current run",
+      });
+
+    expect(res.status).toBe(200);
+    expect(mockHeartbeatService.wakeup).not.toHaveBeenCalled();
   });
 });

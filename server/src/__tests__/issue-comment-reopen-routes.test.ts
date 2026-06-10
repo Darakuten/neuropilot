@@ -480,7 +480,7 @@ describe.sequential("issue comment reopen routes", () => {
     ));
   });
 
-  it("rejects non-assignee agent POST comments on closed issues", async () => {
+  it("allows non-assignee agent POST comments on closed issues without control intent", async () => {
     mockIssueService.getById.mockResolvedValue(makeIssue("done"));
     mockIssueService.addComment.mockResolvedValue({
       id: "comment-1",
@@ -503,10 +503,13 @@ describe.sequential("issue comment reopen routes", () => {
       .post("/api/issues/11111111-1111-4111-8111-111111111111/comments")
       .send({ body: "hello" });
 
-    expect(res.status).toBe(403);
-    expect(res.body.error).toBe("Agent cannot mutate another agent's issue");
+    expect(res.status).toBe(201);
     expect(mockIssueService.update).not.toHaveBeenCalled();
-    expect(mockIssueService.addComment).not.toHaveBeenCalled();
+    expect(mockIssueService.addComment).toHaveBeenCalledWith(
+      "11111111-1111-4111-8111-111111111111",
+      "hello",
+      expect.objectContaining({ agentId: "33333333-3333-4333-8333-333333333333" }),
+    );
     expect(mockHeartbeatService.wakeup).not.toHaveBeenCalled();
   });
 
@@ -577,6 +580,125 @@ describe.sequential("issue comment reopen routes", () => {
         }),
       }),
     ));
+  });
+
+  it("does not re-wake the assignee on POST comments when board fallback carries the assignee run id", async () => {
+    mockIssueService.getById.mockResolvedValue(makeIssue("in_progress"));
+    mockIssueService.addComment.mockResolvedValue({
+      id: "comment-self-run",
+      issueId: "11111111-1111-4111-8111-111111111111",
+      companyId: "company-1",
+      body: "reply from the assignee run",
+      createdByRunId: "run-from-assignee",
+      authorAgentId: null,
+      authorUserId: "local-board",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    mockHeartbeatService.getRun.mockResolvedValue({
+      id: "run-from-assignee",
+      agentId: "22222222-2222-4222-8222-222222222222",
+    });
+
+    const res = await request(await installActor(createApp(), {
+      type: "board",
+      userId: "local-board",
+      companyIds: ["company-1"],
+      source: "local_implicit",
+      isInstanceAdmin: false,
+      runId: "run-from-assignee",
+    }))
+      .post("/api/issues/11111111-1111-4111-8111-111111111111/comments")
+      .send({ body: "reply from the assignee run" });
+
+    expect(res.status).toBe(201);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(mockHeartbeatService.wakeup).not.toHaveBeenCalled();
+  });
+
+  it("does not wake research discussion assignees for no-wake system notices", async () => {
+    const discussionIssue = {
+      ...makeIssue("in_progress"),
+      title: "Research hypothesis discussion (PI ↔ Operator)",
+      description: "This is a long-lived chat surface between the operator and PI.",
+    };
+    mockIssueService.getById.mockResolvedValue(discussionIssue);
+    mockIssueService.addComment.mockResolvedValue({
+      id: "comment-no-wake",
+      issueId: discussionIssue.id,
+      companyId: discussionIssue.companyId,
+      body: "launch result\n<!--research-chat-no-wake-->",
+      createdByRunId: null,
+      authorAgentId: null,
+      authorUserId: "local-board",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    mockIssueService.update.mockResolvedValue({
+      ...discussionIssue,
+      status: "todo",
+      updatedAt: new Date(),
+    });
+
+    const res = await request(await installActor(createApp()))
+      .post("/api/issues/11111111-1111-4111-8111-111111111111/comments")
+      .send({ body: "launch result\n<!--research-chat-no-wake-->" });
+
+    expect(res.status).toBe(201);
+    expect(mockIssueService.update).toHaveBeenCalledWith(
+      "11111111-1111-4111-8111-111111111111",
+      { status: "todo" },
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(mockHeartbeatService.wakeup).not.toHaveBeenCalled();
+  });
+
+  it("settles research discussion self-comments back to todo before continuation recovery can trigger", async () => {
+    const discussionIssue = {
+      ...makeIssue("in_progress"),
+      title: "Research hypothesis discussion (PI ↔ Operator)",
+      description: "This is a long-lived chat surface between the operator and PI.",
+    };
+    mockIssueService.getById.mockResolvedValue(discussionIssue);
+    mockIssueService.addComment.mockResolvedValue({
+      id: "comment-self-run",
+      issueId: discussionIssue.id,
+      companyId: discussionIssue.companyId,
+      body: "short PI reply",
+      createdByRunId: "run-from-assignee",
+      authorAgentId: null,
+      authorUserId: "local-board",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    mockIssueService.update.mockResolvedValue({
+      ...discussionIssue,
+      status: "todo",
+      updatedAt: new Date(),
+    });
+    mockHeartbeatService.getRun.mockResolvedValue({
+      id: "run-from-assignee",
+      agentId: "22222222-2222-4222-8222-222222222222",
+    });
+
+    const res = await request(await installActor(createApp(), {
+      type: "board",
+      userId: "local-board",
+      companyIds: ["company-1"],
+      source: "local_implicit",
+      isInstanceAdmin: false,
+      runId: "run-from-assignee",
+    }))
+      .post("/api/issues/11111111-1111-4111-8111-111111111111/comments")
+      .send({ body: "short PI reply" });
+
+    expect(res.status).toBe(201);
+    expect(mockIssueService.update).toHaveBeenCalledWith(
+      "11111111-1111-4111-8111-111111111111",
+      { status: "todo" },
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(mockHeartbeatService.wakeup).not.toHaveBeenCalled();
   });
 
   it("does not implicitly reopen closed issues via POST comments when no agent is assigned", async () => {
@@ -875,7 +997,7 @@ describe.sequential("issue comment reopen routes", () => {
       .send({ body: "restart someone else's work", resume: true });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toBe("Agent cannot mutate another agent's issue");
+    expect(res.body.error).toBe("Agent cannot request issue-control actions for another agent's issue");
     expect(mockIssueService.update).not.toHaveBeenCalled();
     expect(mockIssueService.addComment).not.toHaveBeenCalled();
     expect(mockHeartbeatService.wakeup).not.toHaveBeenCalled();
