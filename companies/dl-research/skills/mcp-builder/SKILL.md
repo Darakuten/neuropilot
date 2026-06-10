@@ -73,17 +73,17 @@ This comprehensive document contains the complete MCP specification and guidelin
 
 #### 1.4 Study Framework Documentation
 
-**Load and read the following reference files:**
+**Load and read the following references via WebFetch:**
 
-- **MCP Best Practices**: [📋 View Best Practices](./reference/mcp_best_practices.md) - Core guidelines for all MCP servers
+- **MCP Best Practices**: `https://modelcontextprotocol.io/llms-full.txt` (best-practice sections)
 
 **For Python implementations, also load:**
 - **Python SDK Documentation**: Use WebFetch to load `https://raw.githubusercontent.com/modelcontextprotocol/python-sdk/main/README.md`
-- [🐍 Python Implementation Guide](./reference/python_mcp_server.md) - Python-specific best practices and examples
+- [🐍 Python Implementation Guide](https://raw.githubusercontent.com/modelcontextprotocol/python-sdk/main/README.md) - Python-specific best practices and examples
 
 **For Node/TypeScript implementations, also load:**
 - **TypeScript SDK Documentation**: Use WebFetch to load `https://raw.githubusercontent.com/modelcontextprotocol/typescript-sdk/main/README.md`
-- [⚡ TypeScript Implementation Guide](./reference/node_mcp_server.md) - Node/TypeScript-specific best practices and examples
+- [⚡ TypeScript Implementation Guide](https://raw.githubusercontent.com/modelcontextprotocol/typescript-sdk/main/README.md) - Node/TypeScript-specific best practices and examples
 
 #### 1.5 Exhaustively Study API Documentation
 
@@ -133,12 +133,12 @@ Now that you have a comprehensive plan, begin implementation following language-
 #### 2.1 Set Up Project Structure
 
 **For Python:**
-- Create a single `.py` file or organize into modules if complex (see [🐍 Python Guide](./reference/python_mcp_server.md))
+- Create a single `.py` file or organize into modules if complex (see [🐍 Python Guide](https://raw.githubusercontent.com/modelcontextprotocol/python-sdk/main/README.md))
 - Use the MCP Python SDK for tool registration
 - Define Pydantic models for input validation
 
 **For Node/TypeScript:**
-- Create proper project structure (see [⚡ TypeScript Guide](./reference/node_mcp_server.md))
+- Create proper project structure (see [⚡ TypeScript Guide](https://raw.githubusercontent.com/modelcontextprotocol/typescript-sdk/main/README.md))
 - Set up `package.json` and `tsconfig.json`
 - Use MCP TypeScript SDK
 - Define Zod schemas for input validation
@@ -188,7 +188,7 @@ For each tool in the plan:
 
 **At this point, load the appropriate language guide:**
 
-**For Python: Load [🐍 Python Implementation Guide](./reference/python_mcp_server.md) and ensure the following:**
+**For Python: Load [🐍 Python Implementation Guide](https://raw.githubusercontent.com/modelcontextprotocol/python-sdk/main/README.md) and ensure the following:**
 - Using MCP Python SDK with proper tool registration
 - Pydantic v2 models with `model_config`
 - Type hints throughout
@@ -196,7 +196,7 @@ For each tool in the plan:
 - Proper imports organization
 - Module-level constants (CHARACTER_LIMIT, API_BASE_URL)
 
-**For Node/TypeScript: Load [⚡ TypeScript Implementation Guide](./reference/node_mcp_server.md) and ensure the following:**
+**For Node/TypeScript: Load [⚡ TypeScript Implementation Guide](https://raw.githubusercontent.com/modelcontextprotocol/typescript-sdk/main/README.md) and ensure the following:**
 - Using `server.registerTool` properly
 - Zod schemas with `.strict()`
 - TypeScript strict mode enabled
@@ -244,8 +244,8 @@ To ensure quality, review the code for:
 #### 3.3 Use Quality Checklist
 
 To verify implementation quality, load the appropriate checklist from the language-specific guide:
-- Python: see "Quality Checklist" in [🐍 Python Guide](./reference/python_mcp_server.md)
-- Node/TypeScript: see "Quality Checklist" in [⚡ TypeScript Guide](./reference/node_mcp_server.md)
+- Python: see "Quality Checklist" in [🐍 Python Guide](https://raw.githubusercontent.com/modelcontextprotocol/python-sdk/main/README.md)
+- Node/TypeScript: see "Quality Checklist" in [⚡ TypeScript Guide](https://raw.githubusercontent.com/modelcontextprotocol/typescript-sdk/main/README.md)
 
 ---
 
@@ -253,7 +253,7 @@ To verify implementation quality, load the appropriate checklist from the langua
 
 After implementing your MCP server, create comprehensive evaluations to test its effectiveness.
 
-**Load [✅ Evaluation Guide](./reference/evaluation.md) for complete evaluation guidelines.**
+**Load [✅ Evaluation Guide](https://modelcontextprotocol.io/llms-full.txt) for complete evaluation guidelines.**
 
 #### 4.1 Understand Evaluation Purpose
 
@@ -302,7 +302,7 @@ Load these resources as needed during development:
 
 ### Core MCP Documentation (Load First)
 - **MCP Protocol**: Fetch from `https://modelcontextprotocol.io/llms-full.txt` - Complete MCP specification
-- [📋 MCP Best Practices](./reference/mcp_best_practices.md) - Universal MCP guidelines including:
+- [📋 MCP Best Practices](https://modelcontextprotocol.io/llms-full.txt) - Universal MCP guidelines including:
   - Server and tool naming conventions
   - Response format guidelines (JSON vs Markdown)
   - Pagination best practices
@@ -315,14 +315,14 @@ Load these resources as needed during development:
 - **TypeScript SDK**: Fetch from `https://raw.githubusercontent.com/modelcontextprotocol/typescript-sdk/main/README.md`
 
 ### Language-Specific Implementation Guides (Load During Phase 2)
-- [🐍 Python Implementation Guide](./reference/python_mcp_server.md) - Complete Python/FastMCP guide with:
+- [🐍 Python Implementation Guide](https://raw.githubusercontent.com/modelcontextprotocol/python-sdk/main/README.md) - Complete Python/FastMCP guide with:
   - Server initialization patterns
   - Pydantic model examples
   - Tool registration with `@mcp.tool`
   - Complete working examples
   - Quality checklist
 
-- [⚡ TypeScript Implementation Guide](./reference/node_mcp_server.md) - Complete TypeScript guide with:
+- [⚡ TypeScript Implementation Guide](https://raw.githubusercontent.com/modelcontextprotocol/typescript-sdk/main/README.md) - Complete TypeScript guide with:
   - Project structure
   - Zod schema patterns
   - Tool registration with `server.registerTool`
@@ -330,7 +330,7 @@ Load these resources as needed during development:
   - Quality checklist
 
 ### Evaluation Guide (Load During Phase 4)
-- [✅ Evaluation Guide](./reference/evaluation.md) - Complete evaluation creation guide with:
+- [✅ Evaluation Guide](https://modelcontextprotocol.io/llms-full.txt) - Complete evaluation creation guide with:
   - Question creation guidelines
   - Answer verification strategies
   - XML format specifications
